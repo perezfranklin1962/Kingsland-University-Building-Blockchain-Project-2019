@@ -1,0 +1,23 @@
+{
+  "name": "kingsland-university-building-blockchain-project-2019",
+  "version": "1.0.0",
+  "description": "Building Blockchain Project assignment of the M5 Advanced Project Course of October/November 2019.",
+  "main": "NodeServer.js",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/perezfranklin1962/Kingsland-University-Building-Blockchain-Project-2019.git"
+  },
+  "author": "Franklin Perez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/perezfranklin1962/Kingsland-University-Building-Blockchain-Project-2019/issues"
+  },
+  "homepage": "https://github.com/perezfranklin1962/Kingsland-University-Building-Blockchain-Project-2019#readme"
+}
