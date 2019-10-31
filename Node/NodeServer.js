@@ -4,12 +4,17 @@
 // 3) https://stackoverflow.com/questions/10005939/how-do-i-consume-the-json-post-data-in-an-express-application
 // 4) https://alligator.io/nodejs/command-line-arguments-node-scripts
 
+var express = require('express');
+var app = express();
+
+var Node = require("./Node");
+
 function isNumeric(value) {
     return /^\d+$/.test(value);
 }
 
-var express = require('express');
-var app = express();
+// The below would represent the Node that will contain the Blockchain.
+var node = null;
 
 // Needed to be able to parse JSON Message Body in POST RESTFul Services.
 var bodyParser = require('body-parser');
@@ -25,9 +30,7 @@ app.get('/', function (req, res) {
 // General information
 // Endpoint for receiving general information about the node.
 app.get('/info', (req, res) => {
-	let response = {
-		message: "The /info RESTFul URL has been called!"
-	};
+	let response = node.getGeneralInformation();
 
 	res.end(JSON.stringify(response));
 });
@@ -35,30 +38,21 @@ app.get('/info', (req, res) => {
 // Debug endpoint
 // This endpoint will print everything about the node. The blocks, peers, chain, pending transactions and much more.
 app.get('/debug', (req, res) => {
-	let response = {
-		message: "The /debug RESTFul URL has been called!"
-	};
-
+	let response = node.getDebugInformation();
 	res.end(JSON.stringify(response));
 });
 
 // Reset the chain Endpoint
 // This endpoint will reset the chain and start it from the beginning; this is used only for debugging.
 app.get('/reset-chain', (req, res) => {
-	let response = {
-		message: "The /reset-chain RESTFul URL has been called!"
-	};
-
+	let response = node.resetChain();
 	res.end(JSON.stringify(response));
 });
 
 // All blocks Endpoint
 // The endpoint will print all the blocks in the node’s chain.
 app.get('/blocks', (req, res) => {
-	let response = {
-		message: "The /blocks RESTFul URL has been called!"
-	};
-
+	let response = node.getBlocksInformation();
 	res.end(JSON.stringify(response));
 });
 
@@ -66,30 +60,21 @@ app.get('/blocks', (req, res) => {
 // The endpoint will print the block with the index that you specify
 app.get('/block/:index', (req, res) => {
 	let blockIndex = req.params.index;
-	let response = {
-		message: `The /block/${blockIndex} RESTFul URL has been called!`
-	};
-
+	let response = node.getBlockInformation(blockIndex);
 	res.end(JSON.stringify(response));
 });
 
 // Get Pending Transactions Endpoint
 // This endpoint will print the list with transactions that have not been mined.
 app.get('/transactions/pending', (req, res) => {
-	let response = {
-		message: "The /transactions/pending RESTFul URL has been called!"
-	};
-
+	let response = node.getPendingTransactions();
 	res.end(JSON.stringify(response));
 });
 
 // Get Confirmed Transactions
 // This endpoint will print the list of the transactions that are included in blocks.
 app.get('/transactions/confirmed', (req, res) => {
-	let response = {
-		message: "The /transactions/confirmed RESTFul URL has been called!"
-	};
-
+	let response = node.getConfirmedTransactions();
 	res.end(JSON.stringify(response));
 });
 
@@ -97,10 +82,7 @@ app.get('/transactions/confirmed', (req, res) => {
 // This endpoint will return a transaction identified by hash
 app.get('/transactions/:hash', (req, res) => {
 	let hash = req.params.hash;
-	let response = {
-		message: `The /transactions/${hash} RESTFul URL has been called!`
-	};
-
+	let response = node.getTransactionGivenTransactionHashId(hash);
 	res.end(JSON.stringify(response));
 });
 
@@ -109,9 +91,7 @@ app.get('/transactions/:hash', (req, res) => {
 // address in the transaction.
 app.get('/address/:address/transactions', (req, res) => {
 	let address = req.params.address;
-	let response = {
-		message: `The /address/${address}/transactions RESTFul URL has been called!`
-	};
+	let response = node.listTransactionsForAddress(address);
 
 	res.end(JSON.stringify(response));
 });
@@ -123,21 +103,14 @@ app.get('/address/:address/transactions', (req, res) => {
 // If the address is valid but it is not used, return zero for the balance; if it is an invalid address, return an error message.
 app.get('/address/:address/balance', (req, res) => {
 	let address = req.params.address;
-	let response = {
-		message: `The /address/${address}/balance RESTFul URL has been called!`
-	};
-
+	let response = node.getBalanceForAddress(address);
 	res.end(JSON.stringify(response));
 });
 
 // Send Transaction
 // With this endpoint, you can broadcast a transaction to the network.
 app.post('/transactions/send', (req, res) => {
-	let response = {
-		message: `POST --> The /transactions/send RESTFul URL has been called!`,
-		inputBody: req.body
-	};
-
+	let response = node.sendTransaction(req.body);
 	res.end(JSON.stringify(response));
 });
 
@@ -145,21 +118,14 @@ app.post('/transactions/send', (req, res) => {
 // This endpoint will prepare a block candidate and the miner will calculate the nonce for it.
 app.get('/mining/get-mining-job/:minerAddress', (req, res) => {
 	let minerAddress = req.params.minerAddress;
-	let response = {
-		message: `The /mining/get-mining-job/${minerAddress} RESTFul URL has been called!`
-	};
-
+	let response = node.getMiningJob(minerAddress);
 	res.end(JSON.stringify(response));
 });
 
 // Submit Block Endpoint
 // With this endpoint you will submit a mined block.
 app.post('/mining/submit-mined-block', (req, res) => {
-	let response = {
-		message: `POST --> The /mining/submit-mined-block RESTFul URL has been called!`,
-		inputBody: req.body
-	};
-
+	let response = node.submitMinedBlock(req.body);
 	res.end(JSON.stringify(response));
 });
 
@@ -168,42 +134,28 @@ app.post('/mining/submit-mined-block', (req, res) => {
 app.get('/debug/mine/:minerAddress/:difficulty', (req, res) => {
 	let minerAddress = req.params.minerAddress;
 	let difficulty = req.params.difficulty;
-	let response = {
-		message: `The /debug/mine/${minerAddress}/${difficulty} RESTFul URL has been called!`
-	};
-
+	let response = node.debugMineBlock(minerAddress, difficulty);
 	res.end(JSON.stringify(response));
 });
 
 // List All Peers Endpoint
 // This endpoint will return all the peers of the node.
 app.get('/peers', (req, res) => {
-	let response = {
-		message: "The /peers RESTFul URL has been called!"
-	};
-
+	let response = node.listAllPeers();
 	res.end(JSON.stringify(response));
 });
 
 // Connect a Peer Endpoint
 // With this endpoint, you can manually connect to other nodes.
 app.post('/peers/connect', (req, res) => {
-	let response = {
-		message: `POST --> The /peers/connect RESTFul URL has been called!`,
-		inputBody: req.body
-	};
-
+	let response = node.connectToPeer(req.body);
 	res.end(JSON.stringify(response));
 });
 
 // Notify Peers about New Block Endpoint
 // This endpoint will notify the peers about a new block.
 app.post('/peers/notify-new-block', (req, res) => {
-	let response = {
-		message: `POST --> The /peers/notify-new-block RESTFul URL has been called!`,
-		inputBody: req.body
-	};
-
+	let response = node.notifyPeersAboutNewBlock(req.body);
 	res.end(JSON.stringify(response));
 });
 
@@ -230,6 +182,8 @@ var server = app.listen(listeningPort, function () {
    if (host == "::") {
 	   host = "localhost";
    }
+
+   node = new Node();
 
    console.log("Node Server listening at http://%s:%s", host, port);
 });
