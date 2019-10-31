@@ -4,6 +4,10 @@
 // 3) https://stackoverflow.com/questions/10005939/how-do-i-consume-the-json-post-data-in-an-express-application
 // 4) https://alligator.io/nodejs/command-line-arguments-node-scripts
 
+function isNumeric(value) {
+    return /^\d+$/.test(value);
+}
+
 var express = require('express');
 var app = express();
 
@@ -203,15 +207,21 @@ app.post('/peers/notify-new-block', (req, res) => {
 	res.end(JSON.stringify(response));
 });
 
+var listeningPort = 5555;
+
 // The "commander" Node.js library was used to easily handle command-line arguments.
 var commander = require('commander');
 commander
 	.usage('[OPTIONS]...')
-	.option('-lp, --listeningPort <Port Number>', 'Listening Port Number', 5555)
+	.option('-lp, --listeningPort <Port Number>', 'Listening Port Number', listeningPort)
 	.parse(process.argv);
 
-
-var listeningPort = commander.listeningPort;
+if (isNumeric(commander.listeningPort)) {
+	listeningPort = commander.listeningPort;
+}
+else {
+	console.log(`Listening Port Argument entered is not a number: Will use default ${listeningPort} port.`);
+}
 
 var server = app.listen(listeningPort, function () {
    var host = server.address().address
@@ -221,5 +231,5 @@ var server = app.listen(listeningPort, function () {
 	   host = "localhost";
    }
 
-   console.log("Example app listening at http://%s:%s", host, port);
+   console.log("Node Server listening at http://%s:%s", host, port);
 });
