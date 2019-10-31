@@ -76,7 +76,7 @@ function getPublicKeyFromPrivateKey(privateKeyString) {
 function getPublicAddressFromPublicKey(publicKeyString) {
 	let publicAddress = CryptoJS.RIPEMD160(publicKeyString);
 
-	// The "publicAddress" is an Object that needs to be converted to a string. Investigation yieled that
+	// The "publicAddress" is an Object that needs to be converted to a string. Investigation yielded that
 	// it has a "toString()" function that returns back a 40-Hex digit string that is desired from specs of
 	// project.
 	let publicAddressString = publicAddress.toString();
