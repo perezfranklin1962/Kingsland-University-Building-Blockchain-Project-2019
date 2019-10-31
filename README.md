@@ -13,3 +13,5 @@ npm install express --save
 The "commander" Node.js library was used to allow ease in adding and handling command-line arguments. This is explained in the https://alligator.io/nodejs/command-line-arguments-node-scripts web page. The following command was used to intall "commander" to this project:
 npm install commander --save
 
+The "elliptic" and "crypto-js" Node.js libraries are needed to do Public/Private Key Encryption for the Addresses and Signature signing/verification. Research on doing this may be seen in the "Nodes/research/FranklinCryptoUtility.js" file along with the referenced hyperlinks explaining where the information was obtained. Read the "Nodes/research/FranklinCryptoUtility.js" file on how to import and install the "elliptic" and "crypto-js" Node.js libraries.
+
