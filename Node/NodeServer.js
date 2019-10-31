@@ -15,11 +15,7 @@ app.use(bodyParser.json())
 app.get('/', function (req, res) {
    console.log("Got a GET request for the homepage");
 
-   // res.send('Hello GET');
-   res.json({"message" : "Hello GET"});
-   // res.end(JSON.stringify({"message" : "Hello GET"}));
-   // res.send(JSON.stringify({"message" : "Hello GET"}));
-   // res.send({"message" : "Hello GET"});
+   res.end(JSON.stringify({"message" : "Hello GET"}));
 });
 
 // General information
