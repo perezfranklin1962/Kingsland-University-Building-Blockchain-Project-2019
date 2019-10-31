@@ -10,3 +10,6 @@ The Node.js Express Framework was used to create and accept the RESTFul Web Serv
 In order to use the Node.js Express Framework, you have to install it on your computer. I tried to install it using the "npm install -g express" command, but when I ran "node NodeServer.js", node still could not recognize "express". I was abe to then use the following command to successfully install the "express" library:
 npm install express --save
 
+The "commander" Node.js library was used to allow ease in adding and handling command-line arguments. This is explained in the https://alligator.io/nodejs/command-line-arguments-node-scripts web page. The following command was used to intall "commander" to this project:
+npm install commander --save
+

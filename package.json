@@ -4,6 +4,7 @@
   "description": "Building Blockchain Project assignment of the M5 Advanced Project Course of October/November 2019.",
   "main": "NodeServer.js",
   "dependencies": {
+    "commander": "^3.0.2",
     "express": "^4.17.1"
   },
   "devDependencies": {},
