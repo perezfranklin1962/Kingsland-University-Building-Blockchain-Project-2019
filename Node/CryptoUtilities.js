@@ -82,3 +82,9 @@ function getPublicAddressFromPublicKey(publicKeyString) {
 	let publicAddressString = publicAddress.toString();
 	return publicAddressString;
 }
+
+module.exports = {
+	generateRandomPrivateKey,
+	getPublicKeyFromPrivateKey,
+	getPublicAddressFromPublicKey
+};
