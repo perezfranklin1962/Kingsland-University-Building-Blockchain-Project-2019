@@ -9,16 +9,14 @@ var app = express();
 
 var Node = require("./Node");
 
-function isNumeric(value) {
-    return /^\d+$/.test(value);
-}
-
 // The below would represent the Node that will contain the Blockchain.
 var node = null;
 
 // Needed to be able to parse JSON Message Body in POST RESTFul Services.
 var bodyParser = require('body-parser');
 app.use(bodyParser.json())
+
+var GeneralUtilities = require('./GeneralUtilities');
 
 // This responds with "Hello World" on the homepage
 app.get('/', function (req, res) {
@@ -167,7 +165,7 @@ commander
 	.option('-lp, --listeningPort <Port Number>', 'Listening Port Number', listeningPort)
 	.parse(process.argv);
 
-if (isNumeric(commander.listeningPort)) {
+if (GeneralUtilities.isNumeric(commander.listeningPort)) {
 	listeningPort = commander.listeningPort;
 }
 else {
