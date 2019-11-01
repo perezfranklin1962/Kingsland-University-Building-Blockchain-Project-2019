@@ -34,20 +34,24 @@ function generateNodeId() {
 module.exports = class Node {
 
 	constructor(hostNameOrId, listeningPort) {
-		this.nodeId = generateNodeId();
+
+		this.nodeId = generateNodeId(); // NodeId : unique_string
 		// console.log('this.nodeId =', this.nodeId);
 
-		this.selfUrl = `http://${hostNameOrId}:${listeningPort}`;
+		this.selfUrl = `http://${hostNameOrId}:${listeningPort}`; // SelfUrl : URL
 		// console.log('this.selfUrl =', this.selfUrl);
 
 		// Idea obtained from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map web page.
-		this.peers = new Map();
+		this.peers = new Map(); // Peers: map(nodeId --> URL)
 		// this.peers.set("key1", "value1");
 		// this.peers.set("key2", "value2");
 		// console.log('this.peers =', this.peers);
 		// console.log('this.peers.size =', this.peers.size);
 
-		this.chain = new Blockchain();
+		this.chain = new Blockchain(); // Chain: Blockchain
+
+		// REST Endpoints: These are located in the "NodeServer.js" file where each such RESTFul Web Service will call
+		//   the appropriate Node function that is shown below.
 	}
 
 	// General information
