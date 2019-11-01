@@ -43,7 +43,7 @@ function generateRandomPrivateKey() {
 // 2) https://www.codota.com/code/javascript/functions/elliptic/KeyPair/getPublic
 // 3) https://openpgpjs.org/openpgpjs/doc/crypto_public_key_elliptic_key.js.html
 // 4) https://familywebcompany.com/customize/node_modules/bignumber.js/doc/API.html#toS
-// 5) Investigation research as shown in the FranklinUtility.js file
+// 5) Investigation research as shown in the "research/FranklinCryptoUtility.js" file
 function getPublicKeyFromPrivateKey(privateKeyString) {
 	let keyPair = ec.keyFromPrivate(privateKeyString);
 
