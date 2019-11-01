@@ -91,9 +91,9 @@ console.log('  Private Key Length: ', privateKey.length);
 
 // Idea to for below came from the https://www.linkedin.com/pulse/how-does-bitcoin-validate-transactions-primer-tom-goldenberg
 // web page.
-console.log();
+// console.log();
 let keyPair = ec.keyFromPrivate(privateKey);
-console.log(JSON.stringify(keyPair));
+// console.log(JSON.stringify(keyPair));
 
 // Reference --> https://www.codota.com/code/javascript/functions/elliptic/KeyPair/getPublic
 console.log();
@@ -148,6 +148,7 @@ console.log('   publicKeyString.length = ', publicKeyString.length);
 console.log();
 let publicAddress = CryptoJS.RIPEMD160(publicKeyString);
 console.log('publicAddress = ', publicAddress);
+console.log();
 let publicAddressString = publicAddress.toString();
 console.log('publicAddressString = ', publicAddressString);
 console.log('   publicAddressString.length = ', publicAddressString.length);
