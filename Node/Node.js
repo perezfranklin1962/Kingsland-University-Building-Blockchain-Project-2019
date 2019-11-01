@@ -52,6 +52,10 @@ module.exports = class Node {
 
 		// REST Endpoints: These are located in the "NodeServer.js" file where each such RESTFul Web Service will call
 		//   the appropriate Node function that is shown below.
+
+		// No specification on what the Name of the Node should be, so I decided to come up with a way to get a unique name
+		// for each node for my "FranklinBlockchain".
+		this.name = "FranklinBlockchain_" + this.nodeId; // the "about" for the "/info" RESTFul Web Service
 	}
 
 	// General information
