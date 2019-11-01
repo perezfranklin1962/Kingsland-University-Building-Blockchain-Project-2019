@@ -23,7 +23,12 @@ console.log('concatenatedString =', concatenatedString);
 
 console.log();
 
-let nodeId = CryptoJS.SHA512(concatenatedString);
+// let nodeId = CryptoJS.SHA512(concatenatedString); // 128 Hex Digits
+// let nodeId = CryptoJS.SHA256(concatenatedString); // 64 Hex Digits
+// let nodeId = CryptoJS.SHA1(concatenatedString); // 40 Hex Digits
+let nodeId = CryptoJS.RIPEMD160(concatenatedString); // 40 Hex Digits
+// let nodeId = CryptoJS.SHA3(concatenatedString, { outputLength: 224 }) // 56 Hex Digits
 console.log('nodeId =', nodeId);
 let nodeIdString = nodeId.toString();
 console.log('nodeIdString = ', nodeIdString);
+console.log('   nodeIdString.length = ', nodeIdString.length);
