@@ -1,4 +1,4 @@
-// Need below to do a HASH-512
+// Need below to do Hash Functionality functions
 var CryptoJS = require('crypto-js');
 
 // Need below to instantiate and get a handle on the Blockchain object.
@@ -34,6 +34,7 @@ function generateNodeId() {
 
 module.exports = class Node {
 
+	// Reference: Node/research/REST-Endpoints_Info.jpg file
 	constructor(hostNameOrId, listeningPort) {
 
 		this.nodeId = generateNodeId(); // NodeId : unique_string
@@ -58,13 +59,28 @@ module.exports = class Node {
 		// for each node for my "FranklinBlockchain".
 		this.name = "FranklinBlockchain_" + hostNameOrId + "_" + listeningPort; // the "about" for the "/info" RESTFul Web Service
 		// console.log('Node Name = ', this.name);
+
+		// Reference: Node/research/REST-Endpoints_Info.jpg file
+		// chainId == the hash of the genesis block (identifies the chain)
+		this.chainId = this.chain.blocks[0].blockHash;
 	}
 
 	// General information
 	// Endpoint for receiving general information about the node.
+	// RESTFul URL --> /info
+	// Reference: Node/research/REST-Endpoints_Info.jpg file
 	getGeneralInformation() {
 		let response = {
-				message: "The /info RESTFul URL has been called!"
+			"about": this.name,
+			"nodeId": this.nodeId,
+			"chainId": this.chainId,
+			"nodeUrl": this.selfUrl,
+			"peers": this.peers.size,
+			"currentDifficulty": this.chain.currentDifficulty,
+			"blocksCount": this.chain.blocks.length,
+			"cumulativeDifficulty": this.chain.calculateCumulativeDifficulty(),
+			"confirmedTransactions": this.chain.calculateConfirmedTransactions(),
+			"pendingTransactions": this.chain.pendingTransactions.length
 		};
 
 		return response;
