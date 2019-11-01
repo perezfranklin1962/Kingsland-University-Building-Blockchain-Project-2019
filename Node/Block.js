@@ -14,7 +14,7 @@ module.exports = class Block {
 		// Assigned by the Miners
 		nonce, // Nonce: integer (unsigned)
 		dateCreated, // DateCreated : ISO8601_string
-		blockHash) { // BlockHash: hex_number[64] string
+		blockHash = undefined) { // BlockHash: hex_number[64] string
 
 		this.index = index; // Index: integer (unsigned)
 		this.transactions = transactions; // Transactions : Transaction[]
@@ -25,12 +25,22 @@ module.exports = class Block {
 		// Below will be SHA256 of the above
 		this.blockDataHash = calculateBlockDataHash(); // BlockDataHash: hex_number[64] string
 
-		// Not 100% clear from Project Material or recorded lecture what the4 Block Has should be
-		// exactly, but I belive that it's probably the
-		this.blockHash = calculateBlockHash(); // BlockHash: hex_number[64] string
+		// Not 100% clear from Project Material or recorded lecture what the Block Hash should be
+		// exactly, but I believe from the "Node/research/Building-the-Blockchain-Node_Blocks.jpg" file,
+		// it's the SHA-256 Hash of the concatenation of the following:
+		// 1) Block Data Hash
+		// 2) Nonce
+		// 3) DateCreated
+		if (blockHash === undefined) { // BlockHash: hex_number[64] string
+			this.blockHash; // The Block Hash may be done by the Miner
+		}
+		else {
+			this.blockHash = calculateBlockHash(); // BlockHash: hex_number[64] string
+		}
 	}
 
 	// Calculating the Block Data Hash
+	//
 	// The block data hash is calculated by SHA256 hashing the JSON representation of
 	// following block fields (in exactly this order):
 	// 1) 'index'
@@ -81,6 +91,23 @@ module.exports = class Block {
 		let blockDataHashString = blockDataHash.toString();
 
 		return blockDataHashString;
+	}
+
+	// Calculating the Block Hash
+	//
+	// Not 100% clear from Project Material or recorded lecture what the Block Hash should be
+	// exactly, but I believe from the "Node/research/Building-the-Blockchain-Node_Blocks.jpg" file,
+	// it's the SHA-256 Hash of the concatenation of the following:
+	// 1) Block Data Hash
+	// 2) Nonce
+	// 3) DateCreated
+	//
+	// This function should only be executed AFTER the BlockDataHash has been calculated.
+	calculateBlockHash() {
+		let blockHashDataToHashString = this.blockDataHash + this.nonce + this.dateCreated;
+		let blockHash = CryptoJS.SHA256(blockHashDataToHashString);
+		let blockHashString = blockHash.toString();
+		return blockHashString;
 	}
 
 };
