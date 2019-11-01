@@ -1,4 +1,5 @@
 const Block = require('./Block');
+const Transaction = require('./Transaction');
 
 // Found out by using the "Node/research/FranklinCryptoUtility.js" script.
 var faucetPublicAddress = "fce3a061a500b8f3fb10eb29a55f24941f7444de";

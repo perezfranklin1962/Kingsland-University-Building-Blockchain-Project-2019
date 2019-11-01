@@ -23,7 +23,7 @@ module.exports = class Block {
 		this.minedBy = minedBy; // MinedBy: address (40 hex digits) string
 
 		// Below will be SHA256 of the above
-		this.blockDataHash = calculateBlockDataHash(); // BlockDataHash: hex_number[64] string
+		this.blockDataHash = this.calculateBlockDataHash(); // BlockDataHash: hex_number[64] string
 
 		// Not 100% clear from Project Material or recorded lecture what the Block Hash should be
 		// exactly, but I believe from the "Node/research/Building-the-Blockchain-Node_Blocks.jpg" file,
@@ -35,7 +35,7 @@ module.exports = class Block {
 			this.blockHash; // The Block Hash may be done by the Miner
 		}
 		else {
-			this.blockHash = calculateBlockHash(); // BlockHash: hex_number[64] string
+			this.blockHash = this.calculateBlockHash(); // BlockHash: hex_number[64] string
 		}
 	}
 
@@ -75,12 +75,12 @@ module.exports = class Block {
 				'transferSuccessful': transactionJson.transferSuccessful
 			};
 
-			transactionsDataListJson.add(transactionDataToAddJson)
+			transactionsDataListJson.push(transactionDataToAddJson)
 		}
 
-		blockDataToHashJson = {
+		let blockDataToHashJson = {
 			'index': this.index,
-			'transactions': transactionsDataListJson
+			'transactions': transactionsDataListJson,
 			'difficulty': this.difficulty,
 			'prevBlockHash': this.prevBlockHash,
 			'minedBy': this.minedBy

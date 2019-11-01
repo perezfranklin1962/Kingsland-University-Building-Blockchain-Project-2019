@@ -27,7 +27,7 @@ module.exports = class Transaction {
 		this.minedInBlockIndex = minedInBlockIndex; // integer / null
 		this.transferSuccessful = transferSuccessful; // boolean
 
-		this.transactionDataHash = calculateTransactionDataHash();
+		this.transactionDataHash = this.calculateTransactionDataHash();
 	}
 
 	// Calculating the Transaction Data Hash (SHA-256 Hash)
@@ -42,7 +42,7 @@ module.exports = class Transaction {
     //
     // Although not stated, I'll calculate the JSON formatted string of the
     // 'from', 'to', 'value', 'fee', 'dateCreated', 'data', and 'senderPubKey' fields.
-	function calculateTransactionDataHash() {
+	calculateTransactionDataHash() {
 		let transactionDataToHashJson = {
 			'from': this.from,
 			'to': this.to,
