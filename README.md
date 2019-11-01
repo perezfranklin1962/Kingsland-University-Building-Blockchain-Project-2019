@@ -19,6 +19,6 @@ The Faucet Address is used as the Address that will initially receive ALL the cr
 
 Thus, the Faucet Addresses are as follows:
 1) Faucet Private Key: 37fa69286acb4c45b9c4331d192910d91482d5c8628ae10d56c23d9f2d184aee (64 Hex Digits)
-2) Facucet Public Key: 975be465d4c8a8dd60335188766e83cf4a5bf61a6a3bf6ea2b51076c53f41c0d0 (65 Hex Digits)
+2) Faucet Public Key: 975be465d4c8a8dd60335188766e83cf4a5bf61a6a3bf6ea2b51076c53f41c0d0 (65 Hex Digits)
 3) Faucet Public Address: fce3a061a500b8f3fb10eb29a55f24941f7444de (40 Hex Digits)
 
