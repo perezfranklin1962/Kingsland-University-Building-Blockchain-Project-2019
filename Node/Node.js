@@ -55,7 +55,8 @@ module.exports = class Node {
 
 		// No specification on what the Name of the Node should be, so I decided to come up with a way to get a unique name
 		// for each node for my "FranklinBlockchain".
-		this.name = "FranklinBlockchain_" + this.nodeId; // the "about" for the "/info" RESTFul Web Service
+		this.name = "FranklinBlockchain_" + hostNameOrId + "_" + listeningPort; // the "about" for the "/info" RESTFul Web Service
+		// console.log('Node Name = ', this.name);
 	}
 
 	// General information
