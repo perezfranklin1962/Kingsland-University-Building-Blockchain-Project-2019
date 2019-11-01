@@ -31,7 +31,6 @@ app.get('/', function (req, res) {
 // Endpoint for receiving general information about the node.
 app.get('/info', (req, res) => {
 	let response = node.getGeneralInformation();
-
 	res.end(JSON.stringify(response));
 });
 
