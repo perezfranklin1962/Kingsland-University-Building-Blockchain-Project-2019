@@ -32,10 +32,10 @@ module.exports = class Block {
 		// 2) Nonce
 		// 3) DateCreated
 		if (blockHash === undefined) { // BlockHash: hex_number[64] string
-			this.blockHash; // The Block Hash may be done by the Miner
+			this.blockHash = this.calculateBlockHash(); // BlockHash: hex_number[64] string
 		}
 		else {
-			this.blockHash = this.calculateBlockHash(); // BlockHash: hex_number[64] string
+			this.blockHash = blockHash; // The Block Hash may be done by the Miner
 		}
 	}
 
