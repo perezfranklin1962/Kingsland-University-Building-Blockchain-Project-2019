@@ -183,7 +183,7 @@ var server = app.listen(listeningPort, function () {
 	   host = "localhost";
    }
 
-   node = new Node();
+   node = new Node(host, port);
 
    console.log("Node Server listening at http://%s:%s", host, port);
 });
