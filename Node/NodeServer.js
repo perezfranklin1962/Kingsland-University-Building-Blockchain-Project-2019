@@ -55,14 +55,7 @@ app.get('/debug', (req, res) => {
 // 1) Node/research/REST-Endpoints_Debug_Reset-Chain.jpg file
 // 2) Section "Reset the chain Endpoint" of the 4_practical-project-rest-api.pdf file
 app.get('/debug/reset-chain', (req, res) => {
-	let hostNameOrId = node.hostNameOrId;
-	let listeningPort = node.listeningPort;
-	node = new Node(hostNameOrId, listeningPort);
-
-	let response = {
-		"message ": "The chain was reset to its genesis block"
-	}
-
+	let response = node.resetChain();
 	res.end(JSON.stringify(response));
 });
 
