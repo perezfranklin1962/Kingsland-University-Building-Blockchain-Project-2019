@@ -141,20 +141,29 @@ module.exports = class Node {
 
 	// All blocks Endpoint
 	// The endpoint will print all the blocks in the node’s chain.
+	//
+	// References:
+	// 1) Node/research/REST-Endpoints_All-Blocks.jpg file
+	// 2) Section "All blocks Endpoint" of the 4_practical-project-rest-api.pdf file
 	getBlocksInformation() {
-		let response = {
-				message: "The /blocks RESTFul URL has been called!"
-		};
-
+		let response = this.chain.blocks;
 		return response;
 	}
 
 	// Block by Index Endpoint
 	// The endpoint will print the block with the index that you specify
 	getBlockInformation(blockIndex) {
-		let response = {
-				message: `The /block/${blockIndex} RESTFul URL has been called!`
-		};
+		let response = null;
+
+		if (!GeneralUtilities.isNumeric(blockIndex)) {
+			response = { errorMsg: "Block Index value is not positive numeric value" };
+		}
+		else if (blockIndex >= this.chain.blocks.length) {
+			response = { errorMsg: "Invalid Block Index value - exceeds range of Blocks" }
+		}
+		else {
+			response = this.chain.blocks[blockIndex];
+		}
 
 		return response;
 	}

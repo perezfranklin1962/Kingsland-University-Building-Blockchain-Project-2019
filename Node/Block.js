@@ -25,6 +25,9 @@ module.exports = class Block {
 		// Below will be SHA256 of the above
 		this.blockDataHash = this.calculateBlockDataHash(); // BlockDataHash: hex_number[64] string
 
+		this.nonce = nonce;
+		this.dateCreated = dateCreated;
+
 		// Not 100% clear from Project Material or recorded lecture what the Block Hash should be
 		// exactly, but I believe from the "Node/research/Building-the-Blockchain-Node_Blocks.jpg" file,
 		// it's the SHA-256 Hash of the concatenation of the following:

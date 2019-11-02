@@ -18,6 +18,15 @@ app.use(bodyParser.json())
 
 var GeneralUtilities = require('./GeneralUtilities');
 
+// References:
+// 1) https://stackoverflow.com/questions/18765869/accessing-http-status-code-constants
+// 2) https://github.com/prettymuchbryce/http-status-codes
+//
+// Tried to use "npm install -g http-status-codes" to install globally. It successfully installed globally, but
+// when I ran "node Node/research/NodeIdTest.js", the Node program could not find the global location. What worked was
+// the "npm install http-status-codes --save" command.
+var HttpStatus = require('http-status-codes');
+
 // This responds with "Hello World" on the homepage
 app.get('/', function (req, res) {
    console.log("Got a GET request for the homepage");
@@ -66,9 +75,20 @@ app.get('/blocks', (req, res) => {
 
 // Block by Index Endpoint
 // The endpoint will print the block with the index that you specify
-app.get('/block/:index', (req, res) => {
+//
+// References:
+// 1) Node/research/REST-Endpoints_Block-by-Number.jpg file : States to use /blocks/:index URL
+// 2) Section "Block by Index Endpoint" of the Node/research/4_practical-project-rest-api.pdf file : States to use /block/:index URL
+//
+// The https://stormy-everglades-34766.herokuapp.com website used the /blocks/:index URL so that's the one I will use.
+app.get('/blocks/:index', (req, res) => {
 	let blockIndex = req.params.index;
 	let response = node.getBlockInformation(blockIndex);
+
+	if (response.hasOwnProperty("errorMsg")) {
+		res.status(HttpStatus.NOT_FOUND);
+	}
+
 	res.end(JSON.stringify(response));
 });
 
