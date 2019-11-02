@@ -138,7 +138,7 @@ module.exports = class Node {
 	//
 	// References:
 	// 1) Node/research/REST-Endpoints_All-Blocks.jpg file
-	// 2) Section "All blocks Endpoint" of the 4_practical-project-rest-api.pdf file
+	// 2) Section "All blocks Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
 	getBlocksInformation() {
 		let response = this.chain.blocks;
 		return response;
@@ -164,10 +164,38 @@ module.exports = class Node {
 
 	// Get Pending Transactions Endpoint
 	// This endpoint will print the list with transactions that have not been mined.
+	//
+	// References:
+	// 1) Node/research/REST-Endpoints_Get-Pending-Transactions.jpg file
+	// 2) Section "Get Pending Transactions Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
+	//
+	// Both of the above references have in their graphs NO "minedInBlock" nor "transferSuccessful" attribute in
+	// the response DESPITE the item (2) reference having in it's written description that the output should have
+	// BOTH "minedInBlock" and "transferSuccessful" attributes; so, we have some contradictory requirements, and I
+	// will have to make a judgment call. In my view, since the Transaction is Pending and has NOT been Mined, the
+	// "minedInBlock" and "transferSuccessful" attributes should NOT be present in the output.
 	getPendingTransactions() {
-		let response = {
-				message: "The /transactions/pending RESTFul URL has been called!"
-		};
+		// Test code below: Should be commented out.
+		// this.chain.pendingTransactions.push(this.chain.blocks[0].transactions[0]);
+
+		let pendingTransactions = this.chain.pendingTransactions;
+
+		let response = [];
+		for (let i = 0; i < pendingTransactions.length; i++) {
+			let pendingTransaction = pendingTransactions[i];
+			let pendingTransactionOutput = {
+				from: pendingTransaction.from,
+				to: pendingTransaction.to,
+				value: pendingTransaction.value,
+				fee: pendingTransaction.fee,
+				dateCreated: pendingTransaction.dateCreated,
+				senderPubKey: pendingTransaction.senderPubKey,
+				transactionDataHash: pendingTransaction.transactionDataHash,
+				senderSignature: pendingTransaction.senderSignature
+			}
+
+			response.push(pendingTransactionOutput);
+		}
 
 		return response;
 	}

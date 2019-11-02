@@ -13,8 +13,12 @@ module.exports = class Transaction {
 		data, // string (optional)
 		senderPubKey, // hex_number[65] string
 		senderSignature, // hex_number[2][64] : 2-element array of (64 hex digit) strings
-		minedInBlockIndex, // integer / null
-		transferSuccessful) { // boolean
+
+		// The two arguments below are optional, because there's the possibility that one is instantianting a new
+		// Transaction to be placed in the Pending Transactions List and NONE of these transactions have yet to be
+		// mined.
+		minedInBlockIndex = null, // integer / null
+		transferSuccessful = false) { // boolean
 
 		this.from = from; // address (40 hex digits) string
 		this.to = to; // address (40 hex digits) string

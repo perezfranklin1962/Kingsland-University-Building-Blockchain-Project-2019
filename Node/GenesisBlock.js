@@ -25,16 +25,16 @@ const totalBlockchainNumberOfMicroCoins = 1000000000000; // 1 Trillion (micro-co
 
 // Source: Node/research/The-Faucet-Transaction-in-the-Genesis-Block.jpg file
 const genesisCoinbaseTransaction = new Transaction(
-	allZeros_40_Hex_PublicAddress, // address (40 hex digits) string
-	faucetPublicAddress, // address (40 hex digits) string
-	totalBlockchainNumberOfMicroCoins, // integer (non negative)
-	0, // integer (non negative)
+	allZeros_40_Hex_PublicAddress, // from: address (40 hex digits) string
+	faucetPublicAddress, // to: address (40 hex digits) string
+	totalBlockchainNumberOfMicroCoins, // value: integer (non negative)
+	0, // fee: integer (non negative)
 	genesisDateCreated, // ISO8601_string
-	"genesis tx", // string (optional)
-	allZeros_65_Hex_String, // hex_number[65] string
-	[allZeros_64_Hex_String, allZeros_64_Hex_String], // hex_number[2][64] : 2-element array of (64 hex digit) strings
-	0, // integer / null
-	true); // // boolean
+	"genesis tx", // data: string (optional)
+	allZeros_65_Hex_String, // senderPubKey: hex_number[65] string
+	[allZeros_64_Hex_String, allZeros_64_Hex_String], // senderSignature: hex_number[2][64] : 2-element array of (64 hex digit) strings
+	0, // minedInBlockIndex: integer / null
+	true); // transferSuccessful: boolean
 
 // Source: Node/research/The-Genesis-Block_The-Start-of-the-Chain.jpg file
 //
