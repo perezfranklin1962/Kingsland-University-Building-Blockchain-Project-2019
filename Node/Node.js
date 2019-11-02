@@ -135,6 +135,7 @@ module.exports = class Node {
 
 	// All blocks Endpoint
 	// The endpoint will print all the blocks in the node’s chain.
+	// RESTFul URL --> /blocks
 	//
 	// References:
 	// 1) Node/research/REST-Endpoints_All-Blocks.jpg file
@@ -146,6 +147,7 @@ module.exports = class Node {
 
 	// Block by Index Endpoint
 	// The endpoint will print the block with the index that you specify
+	// RESTFul URL --> /blocks/:index
 	getBlockInformation(blockIndex) {
 		let response = null;
 
@@ -164,6 +166,7 @@ module.exports = class Node {
 
 	// Get Pending Transactions Endpoint
 	// This endpoint will print the list with transactions that have not been mined.
+	// RESTFul URL --> /transactions/pending
 	//
 	// References:
 	// 1) Node/research/REST-Endpoints_Get-Pending-Transactions.jpg file
@@ -202,11 +205,13 @@ module.exports = class Node {
 
 	// Get Confirmed Transactions
 	// This endpoint will print the list of the transactions that are included in blocks.
+	// RESTFul URL --> /transactions/confirmed
+	//
+	// References:
+	// 1) Node/research/REST-Endpoints_Get-Confirmed-Transactions.jpg file
+	// 2) Section "Get Confirmed Transactions" of the Node/research/4_practical-project-rest-api.pdf file
 	getConfirmedTransactions() {
-		let response = {
-				message: "The /transactions/confirmed RESTFul URL has been called!"
-		};
-
+		let response = this.chain.getConfirmedTransactions();
 		return response;
 	}
 

@@ -27,11 +27,13 @@ module.exports = class Transaction {
 		this.dateCreated = dateCreated; // ISO8601_string
 		this.data = data; // string (optional)
 		this.senderPubKey = senderPubKey; // hex_number[65] string
+
+		// Hash below dependent on above attributes.
+		this.transactionDataHash = this.calculateTransactionDataHash();
+
 		this.senderSignature = senderSignature; // hex_number[2][64] : 2-element array of (64 hex digit) strings
 		this.minedInBlockIndex = minedInBlockIndex; // integer / null
 		this.transferSuccessful = transferSuccessful; // boolean
-
-		this.transactionDataHash = this.calculateTransactionDataHash();
 	}
 
 	// Calculating the Transaction Data Hash (SHA-256 Hash)
