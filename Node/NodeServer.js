@@ -104,6 +104,11 @@ app.get('/transactions/confirmed', (req, res) => {
 app.get('/transactions/:hash', (req, res) => {
 	let hash = req.params.hash;
 	let response = node.getTransactionGivenTransactionHashId(hash);
+
+	if (response.hasOwnProperty("errorMsg")) {
+			res.status(HttpStatus.NOT_FOUND);
+	}
+
 	res.end(JSON.stringify(response));
 });
 

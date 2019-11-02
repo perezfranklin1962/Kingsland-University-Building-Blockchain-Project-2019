@@ -41,6 +41,18 @@ module.exports = class Blockchain {
 		return transactions;
 	}
 
+	// Returns back an array of BOTH Confirmed and Pending Transactions.
+	getAllTransactions() {
+		let allTransactions = [];
+
+		// Idea for below came from the https://stackoverflow.com/questions/9650826/append-an-array-to-another-array-in-javascript
+		// web page.
+		allTransactions.push.apply(allTransactions, this.getConfirmedTransactions());
+		allTransactions.push.apply(allTransactions, this.pendingTransactions);
+
+		return allTransactions;
+	}
+
 	// Reference: "General information" Section of the Node/research/4_practical-project-rest-api.pdf file
 	// confirmedTransactions – transactions that have been included in a block
 	//

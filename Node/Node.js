@@ -217,10 +217,56 @@ module.exports = class Node {
 
 	// Get Transaction by Hash Endpoint
 	// This endpoint will return a transaction identified by hash
+	// RESTFul URL --> /transactions/:hash
+	//
+	// References:
+	// 1) Node/research/REST-Endpoints_Get-Transaction-by-Hash.jpg file
+	// 2) Section "Get Transaction by Hash Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
+	//
+	// Not clear from above references whether instructor meant to include BOTH confirmed and pending transactions or ONLY the
+	// confirmed transactions. So, I'll make a judgment call and assume the instructor meant to take into account BOTH confirmed
+	// and pending transactions.
 	getTransactionGivenTransactionHashId(transactionHashId) {
-		let response = {
-				message: `The /transactions/${transactionHashId} RESTFul URL has been called!`
-		};
+		// Debug code below. Comment out.
+		/*
+		this.chain.pendingTransactions.push({
+		 	"from": "1234567890abcdef1234567890abcdef12345678",
+			"to": "123456761a500b8f3fb10eb29a55f24941f7444d",
+			"value": 1000000000000,
+			"fee": 0,
+			"dateCreated": "2019-11-01T18:51:24.965Z",
+			"data": "genesis tx",
+			"senderPubKey": "00000000000000000000000000000000000000000000000000000000000000000",
+			"transactionDataHash": "123456789012345bd456790be94a0b56557a4f3ec6b05f06a19e74e73368c82b",
+			"senderSignature": [
+			    "0000000000000000000000000000000000000000000000000000000000000000",
+			    "0000000000000000000000000000000000000000000000000000000000000000"
+			],
+			"minedInBlockIndex": null,
+    		"transferSuccessful": false
+		});
+		*/
+
+		let transactionsToSearch = this.chain.getAllTransactions();
+		let theChosenTransaction = undefined;
+
+		for (let i = 0; i < transactionsToSearch.length; i++) {
+			let transaction = transactionsToSearch[i];
+			if (transaction.transactionDataHash === transactionHashId) {
+				theChosenTransaction = transaction;
+				break;
+			}
+		}
+
+		let response = null;
+		if (theChosenTransaction === undefined) {
+			response = {
+				errorMsg: "No such Transaction was found having the given Transaction Hash Id"
+			}
+		}
+		else {
+			response = theChosenTransaction;
+		}
 
 		return response;
 	}
