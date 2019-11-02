@@ -65,6 +65,11 @@ module.exports = class Node {
 		// Reference: Node/research/REST-Endpoints_Info.jpg file
 		// chainId == the hash of the genesis block (identifies the chain)
 		this.chainId = this.chain.blocks[0].blockHash;
+
+		// Below is needed so that when the /debug/reset chain RESTFul Web Service is received, we can instantiate a NEW node
+		// object.
+		this.hostNameOrId = hostNameOrId;
+		this.listeningPort = listeningPort;
 	}
 
 	// General information
@@ -122,13 +127,17 @@ module.exports = class Node {
 
 	// Reset the chain Endpoint
 	// This endpoint will reset the chain and start it from the beginning; this is used only for debugging.
-	resetChain() {
-		let response = {
-				message: "The /reset-chain RESTFul URL has been called!"
-		};
-
-		return response;
-	}
+	// RESTFul URL --> /debug/reset-chain
+	// UPDATE: Thus method should not be implemented here, because what's needed is to instantiate a NEW Node object
+	//         that has been kept in the NodeServer.js file. Therefore, will comment out the below and implement the
+	//         /debug/reset-chain RESTFul Endpint in the NodeServer.js file.
+	// resetChain() {
+	//		let response = {
+	//			message: "The /debug/reset-chain RESTFul URL has been called!"
+	//		};
+    //
+	//		return response;
+	// }
 
 	// All blocks Endpoint
 	// The endpoint will print all the blocks in the node’s chain.

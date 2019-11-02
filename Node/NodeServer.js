@@ -41,8 +41,19 @@ app.get('/debug', (req, res) => {
 
 // Reset the chain Endpoint
 // This endpoint will reset the chain and start it from the beginning; this is used only for debugging.
-app.get('/reset-chain', (req, res) => {
-	let response = node.resetChain();
+//
+// References:
+// 1) Node/research/REST-Endpoints_Debug_Reset-Chain.jpg file
+// 2) Section "Reset the chain Endpoint" of the 4_practical-project-rest-api.pdf file
+app.get('/debug/reset-chain', (req, res) => {
+	let hostNameOrId = node.hostNameOrId;
+	let listeningPort = node.listeningPort;
+	node = new Node(hostNameOrId, listeningPort);
+
+	let response = {
+		"message ": "The chain was reset to its genesis block"
+	}
+
 	res.end(JSON.stringify(response));
 });
 
