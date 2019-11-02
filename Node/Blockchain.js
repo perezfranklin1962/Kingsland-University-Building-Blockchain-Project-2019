@@ -19,7 +19,7 @@ module.exports = class Blockchain {
 
 	// Reference: "General information" Section of the Node/research/4_practical-project-rest-api.pdf file
 	// confirmedTransactions – transactions that have been included in a block
-	calculateConfirmedTransactions() {
+	calculateNumberOfConfirmedTransactions() {
 		let numberOfConfirmedTransactions = 0;
 		for (let i = 0; i < this.blocks.length; i++) {
 			numberOfConfirmedTransactions += this.blocks[i].transactions.length;

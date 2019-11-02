@@ -87,7 +87,7 @@ module.exports = class Node {
 			"currentDifficulty": this.chain.currentDifficulty,
 			"blocksCount": this.chain.blocks.length,
 			"cumulativeDifficulty": this.chain.calculateCumulativeDifficulty(),
-			"confirmedTransactions": this.chain.calculateConfirmedTransactions(),
+			"confirmedTransactions": this.chain.calculateNumberOfConfirmedTransactions(),
 			"pendingTransactions": this.chain.pendingTransactions.length
 		};
 
