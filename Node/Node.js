@@ -4,6 +4,8 @@ var CryptoJS = require('crypto-js');
 // Need below to instantiate and get a handle on the Blockchain object.
 var Blockchain = require('./Blockchain');
 
+var GeneralUtilities = require('./GeneralUtilities');
+
 // Research code for finding out how to generate the Node Id may be found in the "research/NodeIdTest.js" file.
 // Identifier of the node (hash of Datetime + some random): Will interpret this as meaning to to be:
 //    HASH(Datetime + some random number)
@@ -68,6 +70,7 @@ module.exports = class Node {
 	// General information
 	// Endpoint for receiving general information about the node.
 	// RESTFul URL --> /info
+	//
 	// Reference: Node/research/REST-Endpoints_Info.jpg file
 	getGeneralInformation() {
 		let response = {
@@ -88,9 +91,30 @@ module.exports = class Node {
 
 	// Debug endpoint
 	// This endpoint will print everything about the node. The blocks, peers, chain, pending transactions and much more.
+	// RESTFul URL --> /debug
+	//
+	// References:
+	// 1)The "Debug endpoint" Section of the Node/research/4_practical-project-rest-api.pdf file
+	// 2)Node/research/REST-Endpoints_Debug-Info_All-Node-Data.jpg file
+	//
+	// There seems to be a difference in information displayed between the https://stormy-everglades-34766.herokuapp.com/debug URL
+	// and what's in the References documentation. It appears that the https://stormy-everglades-34766.herokuapp.com/debug URL output
+	// has more than what's in the documentation.
+	// So, UNLESS the instructor states otherwise, what I'll do as far as the implementation of the /debug RESTFul Web Service is
+	// implement as what's shown in the References documentation.
 	getDebugInformation() {
+		// Debug code below
+		// this.peers.set("peer_node_1", "http://localhost:5556");
+		// this.peers.set("peer_node_2", "http://localhost:5557");
+
 		let response = {
-				message: "The /debug RESTFul URL has been called!"
+			"selfUrl": this.selfUrl,
+			"peers": GeneralUtilities.strMapToObj(this.peers),
+			"chain": this.chain.getAsJsonObject(),
+
+			// confirmedBalances – The balances of everyone: From what I interpret, this would be to get the balances of
+			// ALL the Public Addresses based on the confirmed Transactions.
+			"confirmedBalances": GeneralUtilities.strMapToObj(this.chain.getBalancesOfAllAddressesFromConfirmedTransactions())
 		};
 
 		return response;
