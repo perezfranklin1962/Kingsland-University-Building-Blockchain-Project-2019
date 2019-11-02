@@ -271,6 +271,27 @@ module.exports = class Node {
 		return response;
 	}
 
+	// List All Account Balance
+	// This endpoint will return all the balances in the network.
+	// RESTFul URL --> /balances
+	//
+	// References:
+	// 1) Node/research/REST-Endpoints_List-All-Account-Balances.jpg
+	// 2) Section "List All Account Balance" of the Node/research/4_practical-project-rest-api.pdf file
+	//
+	// From the above references, I conclude that these would be balances based on Confirmed Transactions.
+	//
+	// There appears to be a difference between the above two references as to whether we should display accounts
+	// with ZERO balances. Reference (1) states only non-ZERO balances, while reference (2) shows in it's sample
+	// output an account with a ZERO balance. Therefore, I will go ahead and ALSO display accounts that have ZERO
+	// balances.
+	listAllAccountBalances() {
+		let responseMap = this.chain.getBalancesOfAllAddressesFromConfirmedTransactions();
+		let response = GeneralUtilities.strMapToObj(responseMap);
+
+		return response;
+	}
+
 	// List Transactions for Address
 	// This endpoint will print all transactions for an address in which the address may be either the "from" or "to"
 	// address in the transaction.

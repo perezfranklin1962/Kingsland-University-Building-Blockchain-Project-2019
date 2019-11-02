@@ -112,6 +112,13 @@ app.get('/transactions/:hash', (req, res) => {
 	res.end(JSON.stringify(response));
 });
 
+// List All Account Balance
+// This endpoint will return all the balances in the network.
+app.get('/balances', (req, res) => {
+	let response = node.listAllAccountBalances();
+	res.end(JSON.stringify(response));
+});
+
 // List Transactions for Address
 // This endpoint will print all transactions for an address in which the address may be either the "from" or "to"
 // address in the transaction.
