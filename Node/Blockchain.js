@@ -53,6 +53,19 @@ module.exports = class Blockchain {
 		return allTransactions;
 	}
 
+	// Returns back an array of BOTH Confirmed and Pending Transactions associated with a given Public Address.
+	//
+	// References for use of "filter" on a JavaScript array:
+	// 1) https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
+	// 2) https://medium.com/poka-techblog/simplify-your-javascript-use-map-reduce-and-filter-bd02c593cc2d
+	getAllTransactionsFromPublicAddress(publicAddress) {
+		let allTransactions = this.getAllTransactions();
+		let allTransactionsForPublicAddress = allTransactions.filter(transaction =>
+			transaction.to === publicAddress || transaction.from === publicAddress);
+
+		return allTransactionsForPublicAddress;
+	}
+
 	// Reference: "General information" Section of the Node/research/4_practical-project-rest-api.pdf file
 	// confirmedTransactions – transactions that have been included in a block
 	//

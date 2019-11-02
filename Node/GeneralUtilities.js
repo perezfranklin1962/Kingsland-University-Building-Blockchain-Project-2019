@@ -1,6 +1,24 @@
+// References for use of JavaScript "test" and regulat expressions:
+// 1) https://www.w3schools.com/jsref/jsref_regexp_test.asp
+// 2) https://stackoverflow.com/questions/6603015/check-whether-a-string-matches-a-regex-in-js
+// 3) https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
+
+// References for use of JavaScriopt to check if variable is a string
+// 1) https://www.geeksforgeeks.org/javascript-check-if-a-variable-is-a-string
+// 2) https://clubmate.fi/javascript-check-if-function-parameter-is-a-string-or-an-object
+
 // Verifies if a value contained ONLY digits from 0 to 9.
 function isNumeric(value) {
     return /^\d+$/.test(value);
+}
+
+// Verifies that a value is a valid 40-Hex Public Address string
+function isValidPublicAddress(value) {
+	if (typeof value == "string") {
+		return /^[0-9a-f]{40}$/.test(value)
+	}
+
+	return false;
 }
 
 // This method takes a JavaScript Map object that has string keys and returns back a JavaScript object that can later be
@@ -44,5 +62,6 @@ function objToStrMap(obj) {
 module.exports = {
 	isNumeric,
 	strMapToObj,
-	objToStrMap
+	objToStrMap,
+	isValidPublicAddress
 }

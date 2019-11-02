@@ -276,7 +276,7 @@ module.exports = class Node {
 	// RESTFul URL --> /balances
 	//
 	// References:
-	// 1) Node/research/REST-Endpoints_List-All-Account-Balances.jpg
+	// 1) Node/research/REST-Endpoints_List-All-Account-Balances.jpg file
 	// 2) Section "List All Account Balance" of the Node/research/4_practical-project-rest-api.pdf file
 	//
 	// From the above references, I conclude that these would be balances based on Confirmed Transactions.
@@ -295,10 +295,94 @@ module.exports = class Node {
 	// List Transactions for Address
 	// This endpoint will print all transactions for an address in which the address may be either the "from" or "to"
 	// address in the transaction.
+	//
+	// References:
+	// 1) Node/research/REST-Endpoints_List-Transactions-for-Address.jpg file
+	// 2) Section "List Transactions for Address" of the Node/research/4_practical-project-rest-api.pdf file
+	//
+	// Several judgement calls that needed to be made as explained below:
+    // 1) On the Reference (1) above, it states that "Pending transactions will not have a minedInBlock".
+    //    So, does the professor want us to show this attribute in the output if it's a Pending Transaction? What I've
+    //    done for Pending Transactions is that the "minedInBlock" attribute is set to a "null" value and for such transactions,
+    //    the "minedInBlock" will show up with a "null" value.
+    //    So, UNLESS the professor states otherwise, I will still show the "minedInBlock" for ALL Transactions, but the
+    //    Pending Transactions will have their "minedInBlock" show up with a "null" value.
+    // 2) On the Reference (1) shown above, it states that an HTTP Status of "404 Not Found" is one of the possible
+    //    HTTP Statuses that may be returned, but it does not state under what circumstances such a status should be returned.
+    //    I will have to now make a judgement call.
+    //    You could have a situation where you feed in a Public Address, and it has no Transactions; that is a legitimate situation,
+    //    and in my view an HTTP Status of "200 OK" should still be returned with a "transactions" of "[ ]" showing up.
+    //    Therefore, UNLESS the professor states otherwise... I'm going to have to make a judgment call on this. I'll
+    //    return back an HTTP Status of "404 Not Found" if the Public Address fed into the RESTFul URL is not a valid Public Address.
+    // 3) From the above TWO seperate (1) and (2) References, there appears to be a difference in output where one states to have
+    //    a "address" and "transactions" attributes and the other just shows an array list of transactions.
+    //    So, it's not clear WHAT the professor wants here, so, I'm going to have to make a judgement call on this. UNLESS the
+    //    professor state otherwise, I will go ahead and make the output have "address" and "transactions" attributes.
 	listTransactionsForAddress(publicAddress) {
-		let response = {
-				message: `The /address/${publicAddress}/transactions RESTFul URL has been called!`
-		};
+		// Debug code below. Comment out.
+		/*
+		this.chain.pendingTransactions.push({
+		 	"from": "fce3a061a500b8f3fb10eb29a55f24941f7444de",
+			"to": "1234567890abcdef1234567890abcdef12345678",
+			"value": 5000,
+			"fee": 10,
+			"dateCreated": "2019-11-02T18:51:24.965Z", // after genesis block
+			"data": "genesis tx",
+			"senderPubKey": "00000000000000000000000000000000000000000000000000000000000000000",
+			"transactionDataHash": "123456789012345bd456790be94a0b56557a4f3ec6b05f06a19e74e73368c82b",
+			"senderSignature": [
+			    "0000000000000000000000000000000000000000000000000000000000000000",
+			    "0000000000000000000000000000000000000000000000000000000000000000"
+			],
+			"minedInBlockIndex": null,
+    		"transferSuccessful": false
+		});
+		this.chain.pendingTransactions.push({
+			"from": "fce3a061a500b8f3fb10eb29a55f24941f7444de",
+			"to": "1234567890abcdef1234567890abcdef12345678",
+			"value": 8000,
+			"fee": 20,
+			"dateCreated": "2019-10-02T18:51:24.965Z", // before geneis block
+			"data": "genesis tx",
+			"senderPubKey": "00000000000000000000000000000000000000000000000000000000000000000",
+			"transactionDataHash": "123456789012345bd456790be94a0b56557a4f3ec6b05f06a19e74e73368c82b",
+			"senderSignature": [
+				"0000000000000000000000000000000000000000000000000000000000000000",
+				"0000000000000000000000000000000000000000000000000000000000000000"
+			],
+			"minedInBlockIndex": null,
+		    "transferSuccessful": false
+		});
+		*/
+
+		let response = null;
+
+		// Reference for sorting a JavaScript Array:
+		// 1) https://www.w3schools.com/jsref/jsref_sort.asp
+		// 2) https://alligator.io/js/array-sort-numbers
+		//
+		// References for ISO Data String and comparison:
+		// 1) https://flaviocopes.com/javascript-dates
+		// 2) https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString
+		if (GeneralUtilities.isValidPublicAddress(publicAddress)) {
+			let transactionsForAddress = this.chain.getAllTransactionsFromPublicAddress(publicAddress);
+			let sortedAscendingDateCreatedOrderTransactionsForAddress =
+					transactionsForAddress.sort((firstTransaction, secondTransaction) => {
+						let firstDateCreated = new Date(firstTransaction.dateCreated);
+						let secondDateCreated = new Date(secondTransaction.dateCreated);
+						return (firstDateCreated.getTime() - secondDateCreated.getTime());
+					});
+
+			response = {
+				address: publicAddress,
+				transactions: sortedAscendingDateCreatedOrderTransactionsForAddress
+			};
+		}
+		else {
+			response = {
+				errorMsg: "Public Address entered is not a valid 40-Hex Number string"
+			};
+		}
 
 		return response;
 	}
