@@ -380,7 +380,7 @@ module.exports = class Node {
 		}
 		else {
 			response = {
-				errorMsg: "Public Address entered is not a valid 40-Hex Number string"
+				errorMsg: "Invalid address"
 			};
 		}
 
@@ -392,10 +392,135 @@ module.exports = class Node {
 	//
 	// Balances Invalid for Address
 	// If the address is valid but it is not used, return zero for the balance; if it is an invalid address, return an error message.
+	//
+	// RESTFul URL --> /address/:publicAddress/balance
+	//
+	// References:
+	// 1) Node/research/REST-Endpoints_Get-Balances-for-Address.jpg file
+	// 2) Node/research/Balances-for-Address.jpg file
+	// 3) Node/research/REST-Endpoints_Balances-Invalid-for-Address.jpg file
+	// 4) Section "Get Balance for Address Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
+	// 5) Section "Balances Invalid for Address" of the Node/research/4_practical-project-rest-api.pdf file
+	//
+	// From the above References I conclude the below:
+	// 1) Once a Transaction has been placed into the "this.chain.blocks" array of Block, that Transaction automatically has ONE
+	//    confirmation.
+	// 2) The number of Confirmations for a Transaction would be the number of blocks in the
+	//    Blockchain minus the Index Number of the Block that the Transaction got mined. What
+	//    this means is that once a Transaction gets placed into a Block, that starts off the
+	//    Confirmation Count of 1 for the Transaction. The starting Index Block Number for the
+	//    Blocks is Index 0 (i.e., zero).
+	//    So, once a Transaction gets placed in one of the blocks in the "this.chain.blocks" Block array
+	//    that counts as the FIRST confirmation.
+	// 3) The "pendingBalance" includes the balances pertaining to the following:
+	//    a) Transactions that are in the Pending State (i.e., it's "minedInBlockIndex" has a null value)
+	//    b) Transactions that are in the "this.chain.blocks" Block array and whose "transferSuccessful" flag is
+	//       boolean true.
 	getBalanceForAddress(publicAddress) {
-		let response = {
-				message: `The /address/${publicAddress}/balance RESTFul URL has been called!`
-		};
+		// Debug code below. Comment out.
+		/*
+		this.chain.pendingTransactions.push({
+		 	"from": "fce3a061a500b8f3fb10eb29a55f24941f7444de",
+			"to": "1234567890abcdef1234567890abcdef12345678",
+			"value": 5000000,
+			"fee": 100,
+			"dateCreated": "2019-11-02T18:51:24.965Z", // after genesis block
+			"data": "genesis tx",
+			"senderPubKey": "00000000000000000000000000000000000000000000000000000000000000000",
+			"transactionDataHash": "123456789012345bd456790be94a0b56557a4f3ec6b05f06a19e74e73368c82b",
+			"senderSignature": [
+			    "0000000000000000000000000000000000000000000000000000000000000000",
+			    "0000000000000000000000000000000000000000000000000000000000000000"
+			],
+			"minedInBlockIndex": null,
+    		"transferSuccessful": false
+		});
+		*/
+
+		let response = null;
+
+		if (GeneralUtilities.isValidPublicAddress(publicAddress)) {
+			let transactionsForAddress = this.chain.getAllTransactionsFromPublicAddress(publicAddress);
+
+			let safeBalanceValue = 0;
+			let confirmedBalanceValue = 0;
+			let pendingBalanceValue = 0;
+
+			let safeConfirmCount = 6;
+
+			// Debug Code Below. Comment Out.
+			/*
+			this.chain.blocks.push({});
+			this.chain.blocks.push({});
+			this.chain.blocks.push({});
+			this.chain.blocks.push({});
+			this.chain.blocks.push({});
+			console.log('this.chain.blocks.length =', this.chain.blocks.length);
+			*/
+
+			for (let i = 0; i < transactionsForAddress.length; i++) {
+				let transaction = transactionsForAddress[i];
+
+				let deltaBalanceValue = 0;
+				if (transaction.to === publicAddress) {
+					deltaBalanceValue += transaction.value;
+				}
+				else if (transaction.from === publicAddress) {
+					deltaBalanceValue -= transaction.fee;
+					deltaBalanceValue -= transaction.value;
+				}
+
+				// console.log('deltaBalanceValue =', deltaBalanceValue);
+
+				// If this is a Pending Transaction, then...
+				if (transaction.minedInBlockIndex === null) {
+
+					// pendingBalance - expected balance (0 confirmations)
+					// It is assumed that all pending transactions will be successful
+					pendingBalanceValue += deltaBalanceValue;
+				}
+				else // This is a Transaction that has been confirmed at least once..
+				{
+					// The number of Confirmations for a Transaction would be the number of blocks in the
+					// Blockchain minus the Index Number of the Block that the Transaction got mined. What
+					// this means is that once a Transaction gets placed into a Block, that starts off the
+					// Confirmation Count of 1 for the Transaction. The starting Index Block Number for the
+					// Blocks is Index 0 (i.e., zero).
+					//
+					// So, once a Transaction gets placed in one of the blocks in the "this.chain.blocks" Block array
+					// that counts as the FIRST confirmation.
+					let numberOfConfirmations = this.chain.blocks.length - transaction.minedInBlockIndex;
+					// console.log('numberOfConfirmations =', numberOfConfirmations);
+
+					if (transaction.transferSuccessful) {
+						confirmedBalanceValue += deltaBalanceValue;
+
+						// pendingBalance - expected balance (0 confirmations)
+						// It is assumed that all pending transactions will be successful
+						// I interpret "expected Balance" to mean that we ALSO count in the Transactions that have
+						//    been confirmed, since the expected balance should include Transactions that have been
+						//    placed in the actual "this.chain.blocks" - and thus automatically have ONE confirmation - PLUS
+						//    the transactions that are Pending and are expected to become successful.
+						pendingBalanceValue += deltaBalanceValue;
+
+						if (numberOfConfirmations >= safeConfirmCount) {
+							safeBalanceValue += deltaBalanceValue;
+						}
+					}
+				} // end if (transaction.minedInBlockIndex === null)
+			} // end for loop
+
+			response = {
+				safeBalance: safeBalanceValue,
+				confirmedBalance: confirmedBalanceValue,
+				pendingBalance: pendingBalanceValue
+			}
+		}
+		else {
+			response = {
+				errorMsg: "Invalid address"
+			};
+		}
 
 		return response;
 	}
