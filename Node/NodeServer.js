@@ -153,6 +153,13 @@ app.get('/address/:address/balance', (req, res) => {
 // With this endpoint, you can broadcast a transaction to the network.
 app.post('/transactions/send', (req, res) => {
 	let response = node.sendTransaction(req.body);
+
+	if (response.hasOwnProperty("errorMsg")) {
+		res.status(HttpStatus.BAD_REQUEST);
+	} else {
+		res.status(HttpStatus.CREATED);
+	}
+
 	res.end(JSON.stringify(response));
 });
 

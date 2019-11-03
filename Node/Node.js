@@ -5,6 +5,7 @@ var CryptoJS = require('crypto-js');
 var Blockchain = require('./Blockchain');
 
 var GeneralUtilities = require('./GeneralUtilities');
+var CryptoUtilities = require('./CryptoUtilities');
 
 // Research code for finding out how to generate the Node Id may be found in the "research/NodeIdTest.js" file.
 // Identifier of the node (hash of Datetime + some random): Will interpret this as meaning to to be:
@@ -528,6 +529,123 @@ module.exports = class Node {
 	// Send Transaction
 	// With this endpoint, you can broadcast a transaction to the network.
 	sendTransaction(jsonInput) {
+		// Check that all the expected fields in the jsonInput are present.
+		if (jsonInput.hasOwnProperty("from")) {
+			return { errorMsg: "Invalid transaction: field 'from' is missing" };
+		}
+		if (jsonInput.hasOwnProperty("to")) {
+			return { errorMsg: "Invalid transaction: field 'to' is missing" };
+		}
+		if (jsonInput.hasOwnProperty("value")) {
+			return { errorMsg: "Invalid transaction: field 'value' is missing" };
+		}
+		if (jsonInput.hasOwnProperty("fee")) {
+			return { errorMsg: "Invalid transaction: field 'fee' is missing" };
+		}
+		if (jsonInput.hasOwnProperty("dateCreated")) {
+					return { errorMsg: "Invalid transaction: field 'dateCreated' is missing" };
+		}
+		if (jsonInput.hasOwnProperty("data")) {
+			return { errorMsg: "Invalid transaction: field 'data' is missing" };
+		}
+		if (jsonInput.hasOwnProperty("senderPubKey")) {
+			return { errorMsg: "Invalid transaction: field 'senderPubKey' is missing" };
+		}
+		if (jsonInput.hasOwnProperty("senderSignature")) {
+			return { errorMsg: "Invalid transaction: field 'senderSignature' is missing" };
+		}
+
+		// Check that all the expected fields are of the correct type.
+		if (typeof jsonInput.from !== 'string') {
+			return { errorMsg: "Invalid transaction: field 'from' is not a string - it should be a 40-Hex string" };
+		}
+		if (typeof jsonInput.to !== 'string') {
+			return { errorMsg: "Invalid transaction: field 'to' is not a string - it should be a 40-Hex string" };
+		}
+		if (typeof jsonInput.value !== 'number') {
+			return { errorMsg: "Invalid transaction: field 'value' is not a number - it should be a number greater than or equal to 0" };
+		}
+		if (typeof jsonInput.fee !== 'number') {
+			return { errorMsg: "Invalid transaction: field 'fee' is not a number - it should be a number greater than or equal to 10" };
+		}
+		if (typeof jsonInput.dateCreated !== 'string') {
+			return { errorMsg: "Invalid transaction: field 'dateCreated' is not a string - it should be an ISO8601 date string as follows: YYYY-MM-DDTHH:MN:SS.MSSZ" };
+		}
+		if (typeof jsonInput.data !== 'string') {
+			return { errorMsg: "Invalid transaction: field 'data' is not a string - it should be a string" };
+		}
+		if (typeof jsonInput.senderPubKey !== 'string') {
+			return { errorMsg: "Invalid transaction: field 'senderPubKey' is not a string - it should be a 65-Hex string" };
+		}
+		if (!Array.isArray(jsonInput.senderSignature)) {
+			return { errorMsg: "Invalid transaction: field 'senderSignature' is not an array - it should be a 2-element array of [64-hex][64-hex]" };
+		}
+
+		// Check that the "senderSignature" is a two-element array.
+		if (jsonInput.senderSignature.length !== 2) {
+			return { errorMsg: "Invalid transaction: array field 'senderSignature' does not have 2 elements - it should be a 2-element array of [64-hex][64-hex]" };
+		}
+
+		// Trim the fields that are of type string to remove any white space at the beginning and the end.
+		jsonInput.from = jsonInput.from.trim();
+		jsonInput.to = jsonInput.to.trim();
+		jsonInput.dateCreated = jsonInput.dateCreated.trim();
+		jsonInput.data = jsonInput.data.trim();
+		jsonInput.senderPubKey = jsonInput.senderPubKey.trim();
+		jsonInput.senderSignature[0] = jsonInput.senderSignature[0].trim();
+		jsonInput.senderSignature[1] = jsonInput.senderSignature[1].trim();
+
+		// For the Hex-valued strings, go ahead convert the strings to lower case.
+		jsonInput.from = jsonInput.from.toLowerCase();
+		jsonInput.to = jsonInput.to.toLowerCase();
+		jsonInput.senderPubKey = jsonInput.senderPubKey.toLowerCase();
+		jsonInput.senderSignature[0] = jsonInput.senderSignature[0].toLowerCase();
+		jsonInput.senderSignature[1] = jsonInput.senderSignature[1].toLowerCase();
+
+		// Check that the "to" and "from" fields have valid Public Address string values.
+		if (!GeneralUtilities.isValidPublicAddress(jsonInput.from)) {
+			return { errorMsg: "Invalid transaction: string field 'from' is not a 40-Hex string - it should be a 40-Hex string" };
+		}
+		if (!GeneralUtilities.isValidPublicAddress(jsonInput.to)) {
+			return { errorMsg: "Invalid transaction: string field 'to' is not a 40-Hex string - it should be a 40-Hex string" };
+		}
+
+		// Check that the number "value" field has a value that is greater than or equal to zero.
+		if (jsonInput.value < 0) {
+			return { errorMsg: "Invalid transaction: number field 'value' is less than 0 - it should be a number greater than or equal to 0" };
+		}
+
+		// Check that the number "fee" field has a value that is greater than or equal to 10.
+		if (jsonInput.fee < 10) {
+			return { errorMsg: "Invalid transaction: number field 'fee' is less than 10 - it should be a number greater than or equal to 10" };
+		}
+
+		// Check that the "dateCreated" field is a valid ISO8601 date string.
+		if (!GeneralUtilities.isValid_ISO_8601_date(jsonInput.dateCreated)) {
+			return { errorMsg: "Invalid transaction: field 'dateCreated' is not an ISO8601 date string - it should be an ISO8601 date string as follows: YYYY-MM-DDTHH:MN:SS.MSSZ" };
+		}
+
+		// Check that the "senderPubKey" field is a valid Public Key string value.
+		if (!GeneralUtilities.isValidPublicKey(jsonInput.senderPubKey)) {
+			return { errorMsg: "Invalid transaction: field 'senderPubKey' is not a 65-Hex string - it should be a 65-Hex string" };
+		}
+
+		// Check that the first and second elements of the "senderSignature" array are each 64-Hex string
+		if (!GeneralUtilities.isValidSignatureElement(jsonInput.senderSignature[0])) {
+			return { errorMsg: "Invalid transaction: first element of array field 'senderSignature' is not a 64-hex string value - it should be a 64-hex string" };
+		}
+		if (!GeneralUtilities.isValidSignatureElement(jsonInput.senderSignature[1])) {
+			return { errorMsg: "Invalid transaction: second element of array field 'senderSignature' is not a 64-hex string value - it should be a 64-hex string" };
+		}
+
+		// Validate the "senderPubKey": Make sure that the Public Address obtained from the "senderPubKey" matches the "to" Address.
+		let calculatedSenderPublicAddress = CryptoUtilities.getPublicAddressFromPublicKey(jsonInput.senderPubKey);
+		if (jsonInput.from !== calculatedSenderPublicAddress) {
+			return { errorMsg: "Invalid transaction: field 'senderPubKey' does not match the 'from' public address" };
+		}
+
+
+
 		let response = {
 				message: `POST --> The /transactions/send RESTFul URL has been called!`,
 				inputBody: jsonInput

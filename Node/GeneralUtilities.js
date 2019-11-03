@@ -15,7 +15,40 @@ function isNumeric(value) {
 // Verifies that a value is a valid 40-Hex Public Address string
 function isValidPublicAddress(value) {
 	if (typeof value == "string") {
-		return /^[0-9a-f]{40}$/.test(value)
+		return /^[0-9a-f]{40}$/.test(value);
+	}
+
+	return false;
+}
+
+// Verifies that a value is a valid 65-Hex Public Key string
+function isValidPublicKey(value) {
+	if (typeof value == "string") {
+		return /^[0-9a-f]{65}$/.test(value);
+	}
+
+	return false;
+}
+
+// Verifies that a value is a valid 64-Hex Signature element string
+function isValidSignatureElement(value) {
+	if (typeof value == "string") {
+		return /^[0-9a-f]{64}$/.test(value);
+	}
+
+	return false;
+}
+
+// Verifies that a value is a valid ISO8601 date string : YYYY-MM-DDTHH:MN:SS.MSSZ
+// Reference --> https://stackoverflow.com/questions/52869695/check-if-a-date-string-is-in-iso-and-utc-format
+function isValid_ISO_8601_date(value) {
+	if (typeof value == "string") {
+		if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value)) {
+			return false;
+		}
+
+		var aDate = new Date(value);
+		return aDate.toISOString() === value;
 	}
 
 	return false;
@@ -63,5 +96,8 @@ module.exports = {
 	isNumeric,
 	strMapToObj,
 	objToStrMap,
-	isValidPublicAddress
+	isValidPublicAddress,
+	isValid_ISO_8601_date,
+	isValidPublicKey,
+	isValidSignatureElement
 }
