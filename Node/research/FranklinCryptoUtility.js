@@ -364,6 +364,7 @@ restClient.get("http://localhost:5555/info", function (data, response) {
 });
 */
 
+/*
 let nodeUrl = "http://localhost:5555";
 let restfulUrl = nodeUrl + "/info";
 axios.get(restfulUrl)
@@ -380,10 +381,12 @@ axios.get(restfulUrl)
     // handle error
     console.log('error =', error);
   })
+*/
 
 console.log();
 console.log();
 
+/*
 restfulUrl = nodeUrl + "/transactions/send";
 let messageBody = { firstName: 'Fred', lastName: 'Flintstone' };
 axios.post(restfulUrl, messageBody)
@@ -406,3 +409,11 @@ axios.post(restfulUrl, messageBody)
 	// console.log('error.response.headers =', error.response.headers);
     // console.log('error.response.config =', error.response.config);
   });
+*/
+
+let newDate = new Date();
+console.log(newDate.toISOString());
+
+console.log();
+
+

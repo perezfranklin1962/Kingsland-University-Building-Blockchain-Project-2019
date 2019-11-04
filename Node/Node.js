@@ -194,6 +194,7 @@ module.exports = class Node {
 				value: pendingTransaction.value,
 				fee: pendingTransaction.fee,
 				dateCreated: pendingTransaction.dateCreated,
+				data: pendingTransaction.data,
 				senderPubKey: pendingTransaction.senderPubKey,
 				transactionDataHash: pendingTransaction.transactionDataHash,
 				senderSignature: pendingTransaction.senderSignature
@@ -573,11 +574,11 @@ module.exports = class Node {
 		if (typeof jsonInput.to !== 'string') {
 			return { errorMsg: "Invalid transaction: field 'to' is not a string - it should be a 40-Hex string" };
 		}
-		if (typeof jsonInput.value !== 'number') {
-			return { errorMsg: "Invalid transaction: field 'value' is not a number - it should be a number greater than or equal to 0" };
+		if (!Number.isInteger(jsonInput.value)) {
+			return { errorMsg: "Invalid transaction: field 'value' is not an integer - it should be an integer greater than or equal to 0" };
 		}
-		if (typeof jsonInput.fee !== 'number') {
-			return { errorMsg: "Invalid transaction: field 'fee' is not a number - it should be a number greater than or equal to 10" };
+		if (!Number.isInteger(jsonInput.fee)) {
+			return { errorMsg: "Invalid transaction: field 'fee' is not an integer - it should be an integer greater than or equal to 10" };
 		}
 		if (typeof jsonInput.dateCreated !== 'string') {
 			return { errorMsg: "Invalid transaction: field 'dateCreated' is not a string - it should be an ISO8601 date string as follows: YYYY-MM-DDTHH:MN:SS.MSSZ" };
@@ -589,12 +590,20 @@ module.exports = class Node {
 			return { errorMsg: "Invalid transaction: field 'senderPubKey' is not a string - it should be a 65-Hex string" };
 		}
 		if (!Array.isArray(jsonInput.senderSignature)) {
-			return { errorMsg: "Invalid transaction: field 'senderSignature' is not an array - it should be a 2-element array of [64-hex][64-hex]" };
+			return { errorMsg: "Invalid transaction: field 'senderSignature' is not an array - it should be a 2-element array of [64-hex string][64-hex string]" };
 		}
 
 		// Check that the "senderSignature" is a two-element array.
 		if (jsonInput.senderSignature.length !== 2) {
-			return { errorMsg: "Invalid transaction: array field 'senderSignature' does not have 2 elements - it should be a 2-element array of [64-hex][64-hex]" };
+			return { errorMsg: "Invalid transaction: array field 'senderSignature' does not have 2 elements - it should be a 2-element array of [64-hex string][64-hex string]" };
+		}
+
+		// Check that the first and second elements of the "senderSignature" array are each strings
+		if (typeof jsonInput.senderSignature[0] !== 'string') {
+			return { errorMsg: "Invalid transaction: first element of array field 'senderSignature' is not a string - it should be a 64-hex string" };
+		}
+		if (typeof jsonInput.senderSignature[1] !== 'string') {
+			return { errorMsg: "Invalid transaction: second element of array field 'senderSignature' is not a string - it should be a 64-hex string" };
 		}
 
 		// Trim the fields that are of type string to remove any white space at the beginning and the end.
@@ -636,6 +645,13 @@ module.exports = class Node {
 			return { errorMsg: "Invalid transaction: field 'dateCreated' is not an ISO8601 date string - it should be an ISO8601 date string as follows: YYYY-MM-DDTHH:MN:SS.MSSZ" };
 		}
 
+		// Check that the "dateCreated" field's datetime is less than or equal to the current datetime.
+		let currentDateTime = new Date();
+		let dateCreated_DateTime = new Date(jsonInput.dateCreated);
+		if (dateCreated_DateTime.getTime() > currentDateTime.getTime()) {
+			return { errorMsg: "Invalid transaction: field 'dateCreated' has a time value that is in the future - it's time value should be less than or equal to the current time" };
+		}
+
 		// Check that the "senderPubKey" field is a valid Public Key string value.
 		if (!GeneralUtilities.isValidPublicKey(jsonInput.senderPubKey)) {
 			return { errorMsg: "Invalid transaction: field 'senderPubKey' is not a 65-Hex string - it should be a 65-Hex string" };
@@ -668,12 +684,12 @@ module.exports = class Node {
 
 		// Check to see if another Transaction exists that has the given Transaction Data Hash.
 		let transaction = this.getTransactionGivenTransactionHashId(newTransaction.transactionDataHash);
-		if (!transaction.hasProperty("errorMsg")) {
+		if (!transaction.hasOwnProperty("errorMsg")) {
 			return { errorMsg: `Duplicate transaction: Transaction already exists that has Transaction Data Hash -> ${newTransaction.transactionDataHash}` };
 		}
 
 		// Validate that the "senderSignature" to make sure that the "from" Public Address signed the Transaction.
-		let validSignature = CryptoUtils.verifySignature(
+		let validSignature = CryptoUtilities.verifySignature(
 				newTransaction.transactionDataHash,
 				jsonInput.senderPubKey,
 				{ r: jsonInput.senderSignature[0], s: jsonInput.senderSignature[1]} );

@@ -47,8 +47,16 @@ function isValid_ISO_8601_date(value) {
 			return false;
 		}
 
-		var aDate = new Date(value);
-		return aDate.toISOString() === value;
+		let dateISO_String = null;
+		try {
+			let aDate = new Date(value);
+			dateISO_String = aDate.toISOString();
+		}
+		catch (error) {
+			return false;
+		}
+
+		return dateISO_String === value;
 	}
 
 	return false;
