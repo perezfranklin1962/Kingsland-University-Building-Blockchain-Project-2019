@@ -22,6 +22,17 @@ const ec = new EC('secp256k1');
 // Reference --> https://devstore.io/js/crypto-js
 var CryptoJS = require('crypto-js');
 
+// The "node-rest-client" Node.js library is used to make RESTFul Web Service calls from JavaScript.
+// Source --> https://www.npmjs.com/package/node-rest-client
+// Conclusion: Tried the below but received ouput made no sense and lacl of good documentation.
+// var Client = require('node-rest-client').Client;
+
+// The "axios" Node.js library is used to make RESTFul Web Service calls from JavaScript.
+// Sources where I found:
+// 1) https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
+// 2) https://github.com/axios/axios
+var axios = require('axios');
+
 // Idea for random generation of Private Key came from the https://www.savjee.be/2018/10/Signing-transactions-blockchain-javascript
 // web page.
 function generateRandomPrivateKey() {
@@ -338,3 +349,60 @@ console.log('mySignature_R_hex_String_length_beforePadding = ', mySignature_R_he
 console.log('mySignature_S_hex_String_length_beforePadding = ', mySignature_S_hex_String_length_beforePadding);
 
 console.log();
+
+// Will not use below "node-rest-client" library.
+/*
+let restClient = new Client();
+let nodeUrl = "http://localhost:5555"
+
+restClient.get("http://localhost:5555/info", function (data, response) {
+    // parsed response body as js object
+    console.log('data =', data);
+
+    // raw response
+    console.log('response =', response);
+});
+*/
+
+let nodeUrl = "http://localhost:5555";
+let restfulUrl = nodeUrl + "/info";
+axios.get(restfulUrl)
+  .then(function (response) {
+    // handle success
+    // console.log('response = ', response);
+    console.log('response.data =', response.data);
+	console.log('response.status =', response.status);
+	console.log('response.statusText =', response.statusText);
+	console.log('response.headers =', response.headers);
+    console.log('response.config =', response.config);
+  })
+  .catch(function (error) {
+    // handle error
+    console.log('error =', error);
+  })
+
+console.log();
+console.log();
+
+restfulUrl = nodeUrl + "/transactions/send";
+let messageBody = { firstName: 'Fred', lastName: 'Flintstone' };
+axios.post(restfulUrl, messageBody)
+  .then(function (response) {
+    // console.log('response = ', response);
+	console.log('response.data =', response.data);
+	console.log('response.status =', response.status);
+	console.log('response.statusText =', response.statusText);
+	console.log('response.headers =', response.headers);
+    console.log('response.config =', response.config);
+  })
+  .catch(function (error) {
+    console.log('error =', error);
+    // console.log('JSON.parse(error) =', JSON.parse(error));
+    // console.log('error.toJSON() =', error.toJSON());
+    // console.log('error.response =', error.response);
+    console.log('error.response.data =', error.response.data);
+	// console.log('error.response.status =', error.response.status);
+	// console.log('error.response.statusText =', error.response.statusText);
+	// console.log('error.response.headers =', error.response.headers);
+    // console.log('error.response.config =', error.response.config);
+  });

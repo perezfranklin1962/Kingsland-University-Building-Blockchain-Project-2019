@@ -6,6 +6,7 @@ var Blockchain = require('./Blockchain');
 
 var GeneralUtilities = require('./GeneralUtilities');
 var CryptoUtilities = require('./CryptoUtilities');
+var Transaction = require('./Transaction');
 
 // Research code for finding out how to generate the Node Id may be found in the "research/NodeIdTest.js" file.
 // Identifier of the node (hash of Datetime + some random): Will interpret this as meaning to to be:
@@ -528,30 +529,40 @@ module.exports = class Node {
 
 	// Send Transaction
 	// With this endpoint, you can broadcast a transaction to the network.
+	// RESTFul URL --> /transactions/send
+	//
+	// Receives a Transaction, validates it, put's it in the pendingTransaction List.
+	// For a description of what this method does, see the Node/research/Send-Transactions.jpg file.
+	//
+	// References:
+	// 1) Node/research/REST-Endpoints_Send-Transaction.jpg file
+	// 2) Node/research/Send-Transactions.jpg file
+	// 3) Node/research/REST-Endpoints_Send-Transaction_Error.jpg file
+	// 4) Section "Send Transaction" of the Node/research/4_practical-project-rest-api.pdf file
 	sendTransaction(jsonInput) {
 		// Check that all the expected fields in the jsonInput are present.
-		if (jsonInput.hasOwnProperty("from")) {
+		if (!jsonInput.hasOwnProperty("from")) {
 			return { errorMsg: "Invalid transaction: field 'from' is missing" };
 		}
-		if (jsonInput.hasOwnProperty("to")) {
+		if (!jsonInput.hasOwnProperty("to")) {
 			return { errorMsg: "Invalid transaction: field 'to' is missing" };
 		}
-		if (jsonInput.hasOwnProperty("value")) {
+		if (!jsonInput.hasOwnProperty("value")) {
 			return { errorMsg: "Invalid transaction: field 'value' is missing" };
 		}
-		if (jsonInput.hasOwnProperty("fee")) {
+		if (!jsonInput.hasOwnProperty("fee")) {
 			return { errorMsg: "Invalid transaction: field 'fee' is missing" };
 		}
-		if (jsonInput.hasOwnProperty("dateCreated")) {
+		if (!jsonInput.hasOwnProperty("dateCreated")) {
 					return { errorMsg: "Invalid transaction: field 'dateCreated' is missing" };
 		}
-		if (jsonInput.hasOwnProperty("data")) {
+		if (!jsonInput.hasOwnProperty("data")) {
 			return { errorMsg: "Invalid transaction: field 'data' is missing" };
 		}
-		if (jsonInput.hasOwnProperty("senderPubKey")) {
+		if (!jsonInput.hasOwnProperty("senderPubKey")) {
 			return { errorMsg: "Invalid transaction: field 'senderPubKey' is missing" };
 		}
-		if (jsonInput.hasOwnProperty("senderSignature")) {
+		if (!jsonInput.hasOwnProperty("senderSignature")) {
 			return { errorMsg: "Invalid transaction: field 'senderSignature' is missing" };
 		}
 
@@ -641,16 +652,46 @@ module.exports = class Node {
 		// Validate the "senderPubKey": Make sure that the Public Address obtained from the "senderPubKey" matches the "to" Address.
 		let calculatedSenderPublicAddress = CryptoUtilities.getPublicAddressFromPublicKey(jsonInput.senderPubKey);
 		if (jsonInput.from !== calculatedSenderPublicAddress) {
-			return { errorMsg: "Invalid transaction: field 'senderPubKey' does not match the 'from' public address" };
+			return { errorMsg: "Invalid transaction: field 'senderPubKey' does not match the 'from' public address when derving the public address from the public key" };
 		}
 
+		let newTransaction = new Transaction(
+				jsonInput.from, // address (40 hex digits) string
+				jsonInput.to, // address (40 hex digits) string
+				jsonInput.value, // integer (non negative)
+				jsonInput.fee, // integer (non negative)
+				jsonInput.dateCreated, // ISO8601_string
+				jsonInput.data, // string (optional)
+				jsonInput.senderPubKey, // hex_number[65] string
+		    	jsonInput.senderSignature); // hex_number[2][64] : 2-element array of (64 hex digit) strings
 
 
-		let response = {
-				message: `POST --> The /transactions/send RESTFul URL has been called!`,
-				inputBody: jsonInput
-		};
+		// Check to see if another Transaction exists that has the given Transaction Data Hash.
+		let transaction = this.getTransactionGivenTransactionHashId(newTransaction.transactionDataHash);
+		if (!transaction.hasProperty("errorMsg")) {
+			return { errorMsg: `Duplicate transaction: Transaction already exists that has Transaction Data Hash -> ${newTransaction.transactionDataHash}` };
+		}
 
+		// Validate that the "senderSignature" to make sure that the "from" Public Address signed the Transaction.
+		let validSignature = CryptoUtils.verifySignature(
+				newTransaction.transactionDataHash,
+				jsonInput.senderPubKey,
+				{ r: jsonInput.senderSignature[0], s: jsonInput.senderSignature[1]} );
+		if (!validSignature) {
+			return { errorMsg: "Invalid transaction: Invalid signature in the 'senderSignature' field" };
+		}
+
+		// Check the sender account balance to be >= value + fee
+		// Will assume that "account balance" of interest is the "confirmedBalance".
+		let accountBalance = this.getBalanceForAddress(jsonInput.from);
+		if (accountBalance.confirmedBalance < (jsonInput.value + jsonInput.fee)) {
+			return { errorMsg: "Invalid transaction: not enough account balance in the 'to' address for the given 'value' and 'fee' amounts" };
+		}
+
+		// Put the "newTransaction" in the "pending transactions" pool
+		this.chain.pendingTransactions.push(newTransaction);
+
+		let response = { transactionDataHash: newTransaction.transactionDataHash };
 		return response;
 	}
 

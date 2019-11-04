@@ -27,6 +27,12 @@ var GeneralUtilities = require('./GeneralUtilities');
 // the "npm install http-status-codes --save" command.
 var HttpStatus = require('http-status-codes');
 
+// The "axios" Node.js library is used to make RESTFul Web Service calls from JavaScript.
+// Sources where I found:
+// 1) https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
+// 2) https://github.com/axios/axios
+var axios = require('axios');
+
 // This responds with "Hello World" on the homepage
 app.get('/', function (req, res) {
    console.log("Got a GET request for the homepage");
@@ -149,6 +155,37 @@ app.get('/address/:address/balance', (req, res) => {
 	res.end(JSON.stringify(response));
 });
 
+// The "axios" Node.js library is used to make RESTFul Web Service calls from JavaScript.
+// Sources where I found:
+// 1) https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
+// 2) https://github.com/axios/axios
+async function sendTransactionToAllPeerNodesVia_RESTFulCall(transactionToBroadcast) {
+	for (var peerNodeId of node.peers) {
+		let peerUrl = node.peers.get(peerNodeId);
+		let restfulUrl = peerUrl + "/transactions/send";
+		axios.post(restfulUrl, transactionToBroadcast)
+		  .then(function (response) {
+		    // console.log('response = ', response);
+			console.log('response.data =', response.data);
+			console.log('response.status =', response.status);
+			console.log('response.statusText =', response.statusText);
+			console.log('response.headers =', response.headers);
+		    console.log('response.config =', response.config);
+		  })
+		  .catch(function (error) {
+		    console.log('error =', error);
+		    // console.log('JSON.parse(error) =', JSON.parse(error));
+		    // console.log('error.toJSON() =', error.toJSON());
+		    // console.log('error.response =', error.response);
+		    console.log('error.response.data =', error.response.data);
+			console.log('error.response.status =', error.response.status);
+			console.log('error.response.statusText =', error.response.statusText);
+			console.log('error.response.headers =', error.response.headers);
+		    console.log('error.response.config =', error.response.config);
+  		});
+	}
+}
+
 // Send Transaction
 // With this endpoint, you can broadcast a transaction to the network.
 app.post('/transactions/send', (req, res) => {
@@ -157,10 +194,14 @@ app.post('/transactions/send', (req, res) => {
 	if (response.hasOwnProperty("errorMsg")) {
 		res.status(HttpStatus.BAD_REQUEST);
 	} else {
+		sendTransactionToAllPeerNodesVia_RESTFulCall(req.body);
+
 		res.status(HttpStatus.CREATED);
 	}
 
-	res.end(JSON.stringify(response));
+	// res.end(JSON.stringify(response));
+	// res.end(response);
+	res.json(response);
 });
 
 // Get Mining Job Endpoint
