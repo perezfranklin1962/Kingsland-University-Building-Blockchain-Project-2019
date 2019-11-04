@@ -32,6 +32,11 @@ function isValidPublicKey(value) {
 
 // Verifies that a value is a valid 64-Hex Signature element string
 function isValidSignatureElement(value) {
+	return isValid_64_Hex_string;
+}
+
+// Verifies that a value is a valid 64-Hex string
+function isValid_64_Hex_string(value) {
 	if (typeof value === 'string') {
 		return /^[0-9a-f]{64}$/.test(value);
 	}

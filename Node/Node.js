@@ -444,6 +444,11 @@ module.exports = class Node {
 
 		let response = null;
 
+		if (typeof publicAddress === 'string') {
+			publicAddress = publicAddress.trim();
+			publicAddress = publicAddress.toLowerCase();
+		}
+
 		if (GeneralUtilities.isValidPublicAddress(publicAddress)) {
 			let transactionsForAddress = this.chain.getAllTransactionsFromPublicAddress(publicAddress);
 
@@ -725,12 +730,14 @@ module.exports = class Node {
 	// 5) Node/research/Block-Candidate-JSON_Example.jpg file
 	// 6) Node/research/Transactions-in-the-Block-Candidates.jpg file
 	// 7) Node/research/Coins-and-Rewards.jpg file
+	// 8) Node/research/The-Mining-Pool-in-the-Nodes.jpg file
 	getMiningJob(minerAddress) {
 		if (typeof minerAddress !== 'string') {
 			return { errorMessage: "Invalid Miner Address: Miner Address is not a string - it should be a 40-Hex string" }
 		}
 
 		minerAddress = minerAddress.trim();
+		minerAddress = minerAddress.toLowerCase();
 		if (!GeneralUtilities.isValidPublicAddress(minerAddress)) {
 			return { errorMessage: "Invalid Miner Address: Miner Address is not a 40-Hex string - it should be a 40-Hex string" }
 		}
@@ -880,9 +887,8 @@ module.exports = class Node {
 		// Now place the "blockToBeMined" into the Blockchain "miningJobs"
 		this.chain.miningJobs.set(blockToBeMined.blockDataHash, blockToBeMined);
 
-		console.log('blockToBeMined.transactions =', blockToBeMined.transactions);
-		console.log('this.chain.miningJobs =', this.chain.miningJobs);
-
+		// console.log('blockToBeMined.transactions =', blockToBeMined.transactions);
+		// console.log('this.chain.miningJobs =', this.chain.miningJobs);
 
 		// References:
 		// 1) Section "Get Mining Job Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
@@ -901,10 +907,144 @@ module.exports = class Node {
 
 	// Submit Block Endpoint
 	// With this endpoint you will submit a mined block.
+	// RESTFul URL --> /mining/submit-mined-block
+	//
+	// References:
+	// 1) Section "Submit Block Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
+	// 2) Node/research/Processing-a-Mined-Block.jpg file
+	// 3) Node/research/Implementing-the-Mining_Submit-Block.jpg file
+	// 4) Node/research/Implementing-the-Mining_Submit-Invalid-Block.jpg file
+	// 5) Node/research/The-Mining-Pool-in-the-Nodes.jpg file
+	// 6) Node/research/Network-Difficulty_Static-or-Dynamic.jpg file
 	submitMinedBlock(jsonInput) {
+		// Check that all the expected fields in the jsonInput are present.
+		if (!jsonInput.hasOwnProperty("blockDataHash")) {
+			return { errorMsg: "Bad Request: field 'blockDataHash' is missing" };
+		}
+		if (!jsonInput.hasOwnProperty("dateCreated")) {
+			return { errorMsg: "Bad Request: field 'dateCreated' is missing" };
+		}
+		if (!jsonInput.hasOwnProperty("nonce")) {
+			return { errorMsg: "Bad Request: field 'nonce' is missing" };
+		}
+		if (!jsonInput.hasOwnProperty("blockHash")) {
+					return { errorMsg: "Bad Request: field 'blockHash' is missing" };
+		}
+
+		// Check that all the expected fields are of the correct type.
+		if (typeof jsonInput.blockDataHash !== 'string') {
+			return { errorMsg: "Bad Request: field 'blockDataHash' is not a string - it should be a 64-Hex string" };
+		}
+		if (typeof jsonInput.dateCreated !== 'string') {
+			return { errorMsg: "Bad Request: field 'dateCreated' is not a string - it should be an ISO8601 date string as follows: YYYY-MM-DDTHH:MN:SS.MSSZ" };
+		}
+		if (!Number.isInteger(jsonInput.nonce)) {
+			return { errorMsg: "Bad Request: field 'nonce' is not an integer - it should be an integer greater than or equal to 0" };
+		}
+		if (typeof jsonInput.blockash !== 'string') {
+			return { errorMsg: "Bad Request: field 'blockHash' is not a string - it should be a 64-Hex string" };
+		}
+
+		// Trim all the string field values.
+		jsonInput.blockDataHash = jsonInput.blockDataHash.trim();
+		jsonInput.dateCreated = jsonInput.dateCreated.trim();
+		jsonInput.blockash = jsonInput.blockash.trim();
+
+		// For the Hex-valued strings, go ahead and convert the strings to lower case.
+		jsonInput.blockDataHash = jsonInput.blockDataHash.toLowerCase();
+		jsonInput.blockash = jsonInput.blockash.toLowerCase();
+
+		// Check that the "blockDataHash" and "blockHash" fields have 40-Hex string values.
+		if (!GeneralUtilities.isValid_64_Hex_string(jsonInput.blockDataHash)) {
+			return { errorMsg: "Bad Request: string field 'blockDataHash' is not a 64-Hex string - it should be a 64-Hex string" };
+		}
+		if (!GeneralUtilities.isValid_64_Hex_string(jsonInput.blockHash)) {
+			return { errorMsg: "Bad Request: string field 'blockHash' is not a 64-Hex string - it should be a 64-Hex string" };
+		}
+
+		// Check that the "dateCreated" field is a valid ISO8601 date string.
+		if (!GeneralUtilities.isValid_ISO_8601_date(jsonInput.dateCreated)) {
+			return { errorMsg: "Bad Request: field 'dateCreated' is not an ISO8601 date string - it should be an ISO8601 date string as follows: YYYY-MM-DDTHH:MN:SS.MSSZ" };
+		}
+
+		// Check that the "dateCreated" field's datetime is less than or equal to the current datetime.
+		let currentDateTime = new Date();
+		let dateCreated_DateTime = new Date(jsonInput.dateCreated);
+		if (dateCreated_DateTime.getTime() > currentDateTime.getTime()) {
+			return { errorMsg: "Bad Request: field 'dateCreated' has a time value that is in the future - it's time value should be less than or equal to the current time" };
+		}
+
+		// Check that the number "nonce" field has a value that is greater than or equal to zero.
+		if (jsonInput.nonce < 0) {
+			return { errorMsg: "Bad Request: number field 'nonce' is less than 0 - it should be a number greater than or equal to 0" };
+		}
+
+		// The node finds the block candidate by its blockDataHash
+		// Attempt to find the block candidate by it's blockDataHash
+		if (!this.chain.miningJobs.has(jsonInput.blockDataHash)) {
+			return { errorMsg: "Block not found or already mined" }
+		}
+
+		// Block Candidate for Mining Found
+		let possibleNewBlockCandidate = this.chain.miningJobs.get(jsonInput.blockDataHash);
+
+		// The node verifies the hash + its difficulty and builds the next block
+
+		// The block candidate is merged with the nonce + timestamp + hash
+		//
+		// Let's put the appropriate values obtained from the JSON Input into the New Block Candidate
+		// and calculate what the New Block Hash should be.
+		possibleNewBlockCandidate.nonce = jsonInput.nonce;
+		possibleNewBlockCandidate.dateCreated = jsonInput.dateCreated;
+		possibleNewBlockCandidate.calculateBlockHash();
+
+		// Verify that the given "jsonInput.blockHash" matches the newly calculated block hash.
+		if (possibleNewBlockCandidate.blockHash !== jsonInput.blockHash) {
+			return { errorMsg: "Bad Request: Incorrect 'blockHash' field value provided" }
+		}
+
+		// Verify that the given Block Hash matches the Block difficulty. So, according to the
+		// Node/research/Network-Difficulty_Static-or-Dynamic.jpg file, if the Block Difficulty is a certain integer value,
+		// then the Block Hash must have the same number of leading zeros in it.
+		let leadingZeros = ''.padStart(possibleNewBlockCandidate.difficulty, '0');
+		if (!possibleNewBlockCandidate.blockHash.startsWith(leadingZeros)) {
+			return { errorMsg: "Bad Request: 'blockHash' field value provided does not match the Block difficulty" }
+		}
+
+		// Then if the block is still not mined , the chain is extended
+		// Sometimes other miners can be faster --> the mined block is expired
+
+		// Does there exist in the Blockchain a Block that is in the same slot that this "possibleNewBlockCandidate" is suppose to
+		// occupy? In other words, has a Block with the same Block Index as this "possibleNewBlockCandidate" already present in the
+		// Blockchain? If so, then we cannot place this "possibleNewBlockCandidate" in the Blockchain.
+		if (possibleNewBlockCandidate.index != this.chain.blocks.length) {
+			return { errorMsg: "Block with same Block Index already present in Blockchain" }
+		}
+
+		// Verify that the "possibleNewBlockCandidate.prevBlockHash" refers to the Block Hash of the last Block in the Blockchain. If not,
+		// then this "possibleNewBlockCandidate" cannot be placed in the Blockchain.
+		let lastBlockInBlockchain = this.chain.blocks[this.chain.blocks.length -1];
+		if (possibleNewBlockCandidate.prevBlockHash !== lastBlockInBlockchain.blockHash) {
+			return { errorMsg: "Previous Block Hash value of block does not equal the Block Hash of the last Block in the Blockchain" }
+		}
+
+		// At this point it is safe to add the "possibleNewBlockCandidate" into the Blockchain.
+		this.chain.blocks.push(possibleNewBlockCandidate);
+
+		// After a new block is mined in the network (by someone), all pending mining jobs are deleted (because they are no longer valid)
+		// Coding Technique Reference --> https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map
+		this.chain.miningJobs.clear();
+
+		// Now, we have to remove ALL the Transactions in the newly added "possibleNewBlockCandidate" from the Blockchain "pendingTransactions" list.
+		for (let i = 0; i < possibleNewBlockCandidate.transactions.length; i++) {
+			let transactionToRemoveFromPendingTransactions = possibleNewBlockCandidate.transactions[i];
+			this.chain.pendingTransactions = this.chain.pendingTransactions.filter(aTransaction =>
+				aTransaction.transactionDataHash !== transactionToRemoveFromPendingTransactions.transactionDataHash);
+		}
+
+		// Reference: Node/research/Implementing-the-Mining_Submit-Block.jpg file
 		let response = {
-				message: `POST --> The /mining/submit-mined-block RESTFul URL has been called!`,
-				inputBody: jsonInput
+				message: `Block accepted, reward paid: ${possibleNewBlockCandidate.transactions[0].value} microcoins`
 		};
 
 		return response;

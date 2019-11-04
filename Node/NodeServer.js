@@ -217,10 +217,72 @@ app.get('/mining/get-mining-job/:minerAddress', (req, res) => {
 	res.end(JSON.stringify(response));
 });
 
+// RESTFul URL being called --> /peers/notify-new-block
+//
+// References:
+// 1) Section "Notify Peers about New Block Endpoint" of the 4_practical-project-rest-api.pdf file
+// 2) Node/research/REST-Endpoints_Notify-Peers-about-New_Block.jpg
+//
+// The "axios" Node.js library is used to make RESTFul Web Service calls from JavaScript.
+// Sources where I found:
+// 1) https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
+// 2) https://github.com/axios/axios
+async function notifyPeersAboutNewlyMinedBlockVia_RESTFulCall() {
+
+	// Not sure what the "nodeUrl" value should be from the project papers, but it's probably the
+	// Node URL of this Node.
+	let notificationMessageContents = {
+			blocksCount: node.chain.blocks.length,
+			cumulativeDifficulty: node.chain.calculateCumulativeDifficulty(),
+			nodeUrl: node.selfUrl
+	}
+
+	for (var peerNodeId of node.peers) {
+		let peerUrl = node.peers.get(peerNodeId);
+		let restfulUrl = peerUrl + "/peers/notify-new-block";
+		axios.post(restfulUrl, notificationMessageContents)
+		  .then(function (response) {
+		    // console.log('response = ', response);
+			console.log('response.data =', response.data);
+			console.log('response.status =', response.status);
+			console.log('response.statusText =', response.statusText);
+			console.log('response.headers =', response.headers);
+		    console.log('response.config =', response.config);
+		  })
+		  .catch(function (error) {
+		    console.log('error =', error);
+		    // console.log('JSON.parse(error) =', JSON.parse(error));
+		    // console.log('error.toJSON() =', error.toJSON());
+		    // console.log('error.response =', error.response);
+		    console.log('error.response.data =', error.response.data);
+			console.log('error.response.status =', error.response.status);
+			console.log('error.response.statusText =', error.response.statusText);
+			console.log('error.response.headers =', error.response.headers);
+		    console.log('error.response.config =', error.response.config);
+  		});
+	}
+}
+
 // Submit Block Endpoint
 // With this endpoint you will submit a mined block.
 app.post('/mining/submit-mined-block', (req, res) => {
 	let response = node.submitMinedBlock(req.body);
+
+	if (response.hasOwnProperty("errorMsg")) {
+		if (response.errorMessage.startsWith("Bad Request: ")) {
+			res.status(HttpStatus.BAD_REQUEST);
+		}
+		else {
+			res.status(HttpStatus.NOT_FOUND);
+		}
+	}
+	else { // Mined Block successfuly placed in Blockchain
+		// When a Block has been successguly Mined and placed in the Blockchain, then all peers are
+		//   notified about the new mined block.
+		// Reference: Node/research/Processing-a-Mined-Block.jpg file
+		notifyPeersAboutNewlyMinedBlockVia_RESTFulCall();
+	}
+
 	res.end(JSON.stringify(response));
 });
 
@@ -249,6 +311,10 @@ app.post('/peers/connect', (req, res) => {
 
 // Notify Peers about New Block Endpoint
 // This endpoint will notify the peers about a new block.
+//
+// References:
+// 1) Section "Notify Peers about New Block Endpoint" of the 4_practical-project-rest-api.pdf file
+// 2) Node/research/REST-Endpoints_Notify-Peers-about-New_Block.jpg
 app.post('/peers/notify-new-block', (req, res) => {
 	let response = node.notifyPeersAboutNewBlock(req.body);
 	res.end(JSON.stringify(response));
