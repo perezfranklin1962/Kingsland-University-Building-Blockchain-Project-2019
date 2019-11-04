@@ -750,7 +750,7 @@ module.exports = class Node {
 		// As we go through the "pendingTransactionsConsideredForNextBlock", there are some that may be placed in the next block and some that
 		// are not. So, we keep track of this with the below Map where the key will be the 'from' address of the pending transaction. We do this
 		// because we want to minimize a double spend problem by only allowing ONE Transation per 'from' address in the next block.
-		Map pendingTransactionsToBePlacedInNextBlockForMiningMap = new Map();
+		let pendingTransactionsToBePlacedInNextBlockForMiningMap = new Map();
 
 		// Get the Confirmed Balances for ALL of the Public Addresses. We'll need this as a starting point as we "executes all pending transactions
         // and adds them in the block candidate".
@@ -774,9 +774,17 @@ module.exports = class Node {
 
 			// If there's already a Transaction to be placed in the Next Block for mining that has the same "from" Public Addres, then just
 			// skip this Transaction to avoid possible double-spend problem and move on to the next Transaction. This Transaction to be skipped
-			// cam be placed later on in another Block.
-			if (pendingTransactionsToBePlacedInNextBlockForMiningMap.has(pendingTransaction.from) {
+			// can be placed later on in another Block.
+			if (pendingTransactionsToBePlacedInNextBlockForMiningMap.has(pendingTransaction.from)) {
 				continue;
+			}
+
+			if (!confirmedBalancesMap.has(pendingTransaction.from)) {
+				confirmedBalancesMap.set(pendingTransaction.from, 0);
+			}
+
+			if (!confirmedBalancesMap.has(pendingTransaction.to)) {
+				confirmedBalancesMap.set(pendingTransaction.to, 0);
 			}
 
 			// Not clear from instructions on how to process here, but I think I heard in the live lecture that if a "from" Public Address
@@ -786,15 +794,7 @@ module.exports = class Node {
 			//
 			// We run and "execute" all these Transactions to make sure that they have the proper balances, but remember that they STILL
 			// have not been confirmed, but we must act as if they have and will be mined.
-			if (confirmedBalancesMap.get(pendingTransaction.from) >= pendingTransaction.fee)) {
-
-				if (!confirmedBalancesMap.has(pendingTransaction.from)) {
-					confirmedBalancesMap.set(pendingTransaction.from, 0);
-				}
-
-				if (!confirmedBalancesMap.has(pendingTransaction.to)) {
-					confirmedBalancesMap.set(pendingTransaction.to, 0);
-				}
+			if (confirmedBalancesMap.get(pendingTransaction.from) >= pendingTransaction.fee) {
 
 				pendingTransaction.minedInBlockIndex = nextBlockIndex;
 
