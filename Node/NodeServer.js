@@ -209,6 +209,11 @@ app.post('/transactions/send', (req, res) => {
 app.get('/mining/get-mining-job/:minerAddress', (req, res) => {
 	let minerAddress = req.params.minerAddress;
 	let response = node.getMiningJob(minerAddress);
+
+	if (response.hasOwnProperty("errorMsg")) {
+			res.status(HttpStatus.BAD_REQUEST);
+	}
+
 	res.end(JSON.stringify(response));
 });
 

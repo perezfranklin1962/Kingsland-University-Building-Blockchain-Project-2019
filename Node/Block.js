@@ -12,8 +12,8 @@ module.exports = class Block {
 		minedBy, // MinedBy: address (40 hex digits) string
 
 		// Assigned by the Miners
-		nonce, // Nonce: integer (unsigned)
-		dateCreated, // DateCreated : ISO8601_string
+		nonce = undefined, // Nonce: integer (unsigned)
+		dateCreated = undefined, // DateCreated : ISO8601_string
 		blockHash = undefined) { // BlockHash: hex_number[64] string
 
 		this.index = index; // Index: integer (unsigned)
@@ -43,6 +43,8 @@ module.exports = class Block {
 	}
 
 	// Calculating the Block Data Hash
+	//
+	// Reference: Node/research/How-to-Calculate-the-Block-Data-Hash.jpg file
 	//
 	// The block data hash is calculated by SHA256 hashing the JSON representation of
 	// following block fields (in exactly this order):

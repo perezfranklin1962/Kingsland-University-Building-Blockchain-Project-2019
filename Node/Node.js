@@ -7,6 +7,7 @@ var Blockchain = require('./Blockchain');
 var GeneralUtilities = require('./GeneralUtilities');
 var CryptoUtilities = require('./CryptoUtilities');
 var Transaction = require('./Transaction');
+var Block = require('./Block');
 
 // Research code for finding out how to generate the Node Id may be found in the "research/NodeIdTest.js" file.
 // Identifier of the node (hash of Datetime + some random): Will interpret this as meaning to to be:
@@ -713,9 +714,178 @@ module.exports = class Node {
 
 	// Get Mining Job Endpoint
 	// This endpoint will prepare a block candidate and the miner will calculate the nonce for it.
+	// RESTFul URL --> /mining/get-mining-job/:minerAddress
+	//
+	// References:
+	// 1) Node/research/The-Mining-Process_Preparation.jpg file
+	// 2) Section "Get Mining Job Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
+	// 3) Node/research/Implementing-the-Mining_Get-Mining-Job.jpg file
+	// 4) Node/research/The-Coinbase-Transaction_Reward.jpg file
+	// 5) Node/research/Block-Candidate-JSON_Example.jpg file
+	// 6) Node/research/Transactions-in-the-Block-Candidates.jpg file
+	// 7) Node/research/Coins-and-Rewards.jpg file
 	getMiningJob(minerAddress) {
+		if (typeof minerAddress !== 'string') {
+			return { errorMessage: "Invalid Miner Address: Miner Address is not a string - it should be a 40-Hex string" }
+		}
+
+		minerAddress = minerAddress.trim();
+		if (!GeneralUtilities.isValidPublicAddress(minerAddress)) {
+			return { errorMessage: "Invalid Miner Address: Miner Address is not a 40-Hex string - it should be a 40-Hex string" }
+		}
+
+		// We need to take a snapshot full copy first of all the Pending Transactions, because we might have a situation of multiple
+		// requests from different miners to request a block to mine and some of these pending transactions might be in different blocks
+		// (i.e., mining jobs) to be mined.
+		// Reference ---> https://dev.to/samanthaming/how-to-deep-clone-an-array-in-javascript-3cig
+		let pendingTransactionsConsideredForNextBlock = JSON.parse(JSON.stringify(this.chain.pendingTransactions));
+
+		// We want the transactions with the highest fees at the top of the list. So, we will sort these Transaction in descending order
+		// from highest fee to lower fees.
+		// Reference: Node/research/The-Mining-Process_Preparation.jpg file
+		//
+		// Source for Coding Technique --> https://www.w3schools.com/jsref/jsref_sort.asp
+		pendingTransactionsConsideredForNextBlock.sort(function(a, b){ return b.fee - a.fee });
+
+		// As we go through the "pendingTransactionsConsideredForNextBlock", there are some that may be placed in the next block and some that
+		// are not. So, we keep track of this with the below Map where the key will be the 'from' address of the pending transaction. We do this
+		// because we want to minimize a double spend problem by only allowing ONE Transation per 'from' address in the next block.
+		Map pendingTransactionsToBePlacedInNextBlockForMiningMap = new Map();
+
+		// Get the Confirmed Balances for ALL of the Public Addresses. We'll need this as a starting point as we "executes all pending transactions
+        // and adds them in the block candidate".
+		// Reference: Node/research/The-Mining-Process_Preparation.jpg file
+		let confirmedBalancesMap = this.chain.getBalancesOfAllAddressesFromConfirmedTransactions();
+
+		// Will need in the upcoming "for" loop to place the "minedInBlock" value. Also, we want a snapshot here to avoid the possibility
+		// that while executing a "for" loop some other process may have added a new Block.
+		let nextBlockIndex = this.chain.length + 1;
+
+		// We need to keep track of the Coinbase Transaction value, which will be the sum of the following:
+		// 1) The Block Reward: 5,000,000 micro-coins
+		// 2) Sum of all the Fees of the Transactions that will be placed in the Next Block to be Mined
+		//
+		// Reference: Node/research/Coins-and-Rewards.jpg file
+		let coinbaseTransactionValue = 5000000;
+
+		// Executes all pending transactions and adds them in the block candidate (i.e.,pendingTransactionsToBePlacedInNextBlockForMiningMap).
+		for (let i = 0; i < pendingTransactionsConsideredForNextBlock.length; i++) {
+			let pendingTransaction = pendingTransactionsConsideredForNextBlock[i];
+
+			// If there's already a Transaction to be placed in the Next Block for mining that has the same "from" Public Addres, then just
+			// skip this Transaction to avoid possible double-spend problem and move on to the next Transaction. This Transaction to be skipped
+			// cam be placed later on in another Block.
+			if (pendingTransactionsToBePlacedInNextBlockForMiningMap.has(pendingTransaction.from) {
+				continue;
+			}
+
+			// Not clear from instructions on how to process here, but I think I heard in the live lecture that if a "from" Public Address
+			// has enough to fund the Transaction Fee but NOT the Transaction Value, just go ahead and add the Transaction in the
+			// next Block ONLY the "tranferSuccessful" be set to a boolean "false". But.. if the "from" Public Address does NOT have enough
+			// to the Transaction Fee, then do NO NOT place this Pending Transaction in the Next Block to be Mined.
+			//
+			// We run and "execute" all these Transactions to make sure that they have the proper balances, but remember that they STILL
+			// have not been confirmed, but we must act as if they have and will be mined.
+			if (confirmedBalancesMap.get(pendingTransaction.from) >= pendingTransaction.fee)) {
+
+				if (!confirmedBalancesMap.has(pendingTransaction.from)) {
+					confirmedBalancesMap.set(pendingTransaction.from, 0);
+				}
+
+				if (!confirmedBalancesMap.has(pendingTransaction.to)) {
+					confirmedBalancesMap.set(pendingTransaction.to, 0);
+				}
+
+				pendingTransaction.minedInBlockIndex = nextBlockIndex;
+
+				// The "from" address in a Transaction ALWAYS pays the fee.
+				let tempBalance = addressBalances.get(pendingTransaction.from);
+				tempBalance -= pendingTransaction.fee;
+			    confirmedBalancesMap.set(pandingTransaction.from, tempBalance);
+
+			    // Add the "fee" to the Coinbase Transaction Value field.
+			    coinbaseTransactionValue += pendingTransaction.fee;
+
+				if (confirmedBalancesMap.get(pendingTransaction.from) >= (pendingTransaction.fee + pendingTransaction.value)) {
+					// Debit appropriately the "from" Public Address
+					tempBalance = confirmedBalancesMap.get(pendingTransaction.from);
+					tempBalance -= pendingTransaction.value;
+					confirmedBalancesMap.set(pendingTransaction.from, tempBalance);
+
+					// Credit appropriately the "to" Public Address
+					tempBalance = confirmedBalancesMap.get(pendingTransaction.to);
+					tempBalance += pendingTransaction.value;
+					confirmedBalancesMap.set(pendingTransaction.to, tempBalance);
+
+					pendingTransaction.transferSuccessful = true;
+				}
+				else { // The "from" Address does not have enough to cover both the Transaction fee and value
+					pendingTransaction.transferSuccessful = false;
+				}
+
+				// At this point, we know that the Pending Transaction can be placed in the Next Block to be Mined.
+				pendingTransactionsToBePlacedInNextBlockForMiningMap(pendingTransaction.from, pendingTransaction);
+			}
+			else { // "from" Public Address does not have enough to cover the Fee and Value
+
+				// Not sure what the professor wants here, but if the Pending Transaction does not even have enough to cover BOTH the
+				// Transaction Fee and Value, then it's probably best to just remove it from the Blockchain Pending Transaction List.
+				// Filter Technique Source --> https://alligator.io/js/filter-array-method
+				this.chain.pendingTransactions = this.chain.pendingTransactions.filter(aTransaction =>
+					aTransaction.transactionDataHash != pendingTransaction.transactionDataHash);
+			}
+		}
+
+		// Create the Coinbase Transaction.
+		// Reference: Node/research/The-Coinbase-Transaction_Reward.jpg file
+		let coinbaseTransaction = new Transaction(
+				GenesisBlock.allZeros_40_Hex_PublicAddress, // from: address (40 hex digits) string
+				minerAddress, // to: address (40 hex digits) string
+				coinbaseTransactionValue, // value: integer (non negative)
+				0, // fee: integer (non negative)
+				new Date().toISOString(), // ISO8601_string
+				"coinbase tx", // data: string (optional)
+				GenesisBlock.allZeros_65_Hex_String, // senderPubKey: hex_number[65] string
+
+				// senderSignature: hex_number[2][64] : 2-element array of (64 hex digit) strings
+				[GenesisBlock.allZeros_64_Hex_String, GenesisBlock.allZeros_64_Hex_String],
+
+				nextBlockIndex, // minedInBlockIndex: integer / null
+				true); // transferSuccessful: boolean
+
+		// Create the list of Transactions to be placed in the Next Block to be mined.
+		// The Coinbase Transaction is always the FIRST Transaction in the array of Transactions.
+		//
+		// References for coding technique:
+		// 1) https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map
+		// 2) https://stackoverflow.com/questions/9650826/append-an-array-to-another-array-in-javascript
+		let transactionsToBePlacedInNextBlockForMining = [ coinbaseTransaction ];
+		transactionsToBePlacedInNextBlockForMining.push.apply(
+			transactionsToBePlacedInNextBlockForMining,
+			Array.from(pendingTransactionsToBePlacedInNextBlockForMiningMap.values()));
+
+		// Create the Block to be Mined.
+		// Reference: Node/research/Block-Candidate-JSON_Example.jpg file
+		let blockToBeMined = new Block(
+			nextBlockIndex, // Index: integer (unsigned)
+			transactionsToBePlacedInNextBlockForMining, // Transactions : Transaction[]
+			this.chain.currentDifficulty, // Difficulty: integer (unsigned)
+			this.chain.blocks[nextBlockIndex-1].blockDataHash, // PrevBlockHash: hex_number[64] string
+			minerAddress); // MinedBy: address (40 hex digits) string
+
+		// Now place the "blockToBeMined" into the Blockchain "miningJobs"
+		this.chain.miningJobs.set(blockToBeMined.blockDataHash, blockToBeMined);
+
+		// References:
+		// 1) Section "Get Mining Job Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
+	    // 2) Node/research/Implementing-the-Mining_Get-Mining-Job.jpg file
 		let response = {
-				message: `The /mining/get-mining-job/${minerAddress} RESTFul URL has been called!`
+				'index': blockToBeMined.index,
+				'transactionsIncluded': blockToBeMined.transactions.length,
+				'difficulty': blockToBeMined.difficulty,
+				'expectedReward': blockToBeMined.transactions[0].value,
+				'rewardAddress': blockToBeMined.transactions[0].to,
+				'blockDataHash': blockToBeMined.blockDataHash
 		};
 
 		return response;

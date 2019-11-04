@@ -50,5 +50,7 @@ const genesisBlock = new Block(
 	genesisDateCreated); // DateCreated : ISO8601_string
 
 module.exports = {
-	genesisBlock
+	genesisBlock,
+	allZeros_65_Hex_String,
+	allZeros_64_Hex_String
 };
