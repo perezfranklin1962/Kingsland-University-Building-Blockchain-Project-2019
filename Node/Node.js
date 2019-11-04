@@ -1011,7 +1011,7 @@ module.exports = class Node {
 			return { errorMsg: "Bad Request: 'blockHash' field value provided does not match the Block difficulty" }
 		}
 
-		// Then if the block is still not mined , the chain is extended
+		// Then if the block is still not mined, the chain is extended
 		// Sometimes other miners can be faster --> the mined block is expired
 
 		// Does there exist in the Blockchain a Block that is in the same slot that this "possibleNewBlockCandidate" is suppose to
