@@ -701,7 +701,7 @@ module.exports = class Node {
 		// Will assume that "account balance" of interest is the "confirmedBalance".
 		let accountBalance = this.getBalanceForAddress(jsonInput.from);
 		if (accountBalance.confirmedBalance < (jsonInput.value + jsonInput.fee)) {
-			return { errorMsg: "Invalid transaction: not enough account balance in the 'to' address for the given 'value' and 'fee' amounts" };
+			return { errorMsg: "Invalid transaction: not enough account balance in the 'from' address for the given 'value' and 'fee' amounts" };
 		}
 
 		// Put the "newTransaction" in the "pending transactions" pool
