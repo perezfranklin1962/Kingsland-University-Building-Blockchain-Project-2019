@@ -52,5 +52,6 @@ const genesisBlock = new Block(
 module.exports = {
 	genesisBlock,
 	allZeros_65_Hex_String,
-	allZeros_64_Hex_String
+	allZeros_64_Hex_String,
+	allZeros_40_Hex_PublicAddress
 };

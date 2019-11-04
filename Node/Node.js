@@ -8,6 +8,7 @@ var GeneralUtilities = require('./GeneralUtilities');
 var CryptoUtilities = require('./CryptoUtilities');
 var Transaction = require('./Transaction');
 var Block = require('./Block');
+var GenesisBlock = require('./GenesisBlock');
 
 // Research code for finding out how to generate the Node Id may be found in the "research/NodeIdTest.js" file.
 // Identifier of the node (hash of Datetime + some random): Will interpret this as meaning to to be:
@@ -758,8 +759,8 @@ module.exports = class Node {
 		let confirmedBalancesMap = this.chain.getBalancesOfAllAddressesFromConfirmedTransactions();
 
 		// Will need in the upcoming "for" loop to place the "minedInBlock" value. Also, we want a snapshot here to avoid the possibility
-		// that while executing a "for" loop some other process may have added a new Block.
-		let nextBlockIndex = this.chain.length + 1;
+		// that while executing a "for" loop some other process may have added a new Block. Block Indexes start at 0.
+		let nextBlockIndex = this.chain.blocks.length;
 
 		// We need to keep track of the Coinbase Transaction value, which will be the sum of the following:
 		// 1) The Block Reward: 5,000,000 micro-coins
@@ -799,9 +800,9 @@ module.exports = class Node {
 				pendingTransaction.minedInBlockIndex = nextBlockIndex;
 
 				// The "from" address in a Transaction ALWAYS pays the fee.
-				let tempBalance = addressBalances.get(pendingTransaction.from);
+				let tempBalance = confirmedBalancesMap.get(pendingTransaction.from);
 				tempBalance -= pendingTransaction.fee;
-			    confirmedBalancesMap.set(pandingTransaction.from, tempBalance);
+			    confirmedBalancesMap.set(pendingTransaction.from, tempBalance);
 
 			    // Add the "fee" to the Coinbase Transaction Value field.
 			    coinbaseTransactionValue += pendingTransaction.fee;
@@ -824,7 +825,7 @@ module.exports = class Node {
 				}
 
 				// At this point, we know that the Pending Transaction can be placed in the Next Block to be Mined.
-				pendingTransactionsToBePlacedInNextBlockForMiningMap(pendingTransaction.from, pendingTransaction);
+				pendingTransactionsToBePlacedInNextBlockForMiningMap.set(pendingTransaction.from, pendingTransaction);
 			}
 			else { // "from" Public Address does not have enough to cover the Fee and Value
 
@@ -864,17 +865,24 @@ module.exports = class Node {
 			transactionsToBePlacedInNextBlockForMining,
 			Array.from(pendingTransactionsToBePlacedInNextBlockForMiningMap.values()));
 
+		// console.log('nextBlockIndex = ', nextBlockIndex);
+		// console.log('this.chain.blocks =', this.chain.blocks);
+
 		// Create the Block to be Mined.
 		// Reference: Node/research/Block-Candidate-JSON_Example.jpg file
 		let blockToBeMined = new Block(
 			nextBlockIndex, // Index: integer (unsigned)
 			transactionsToBePlacedInNextBlockForMining, // Transactions : Transaction[]
 			this.chain.currentDifficulty, // Difficulty: integer (unsigned)
-			this.chain.blocks[nextBlockIndex-1].blockDataHash, // PrevBlockHash: hex_number[64] string
+			this.chain.blocks[nextBlockIndex - 1].blockHash, // PrevBlockHash: hex_number[64] string
 			minerAddress); // MinedBy: address (40 hex digits) string
 
 		// Now place the "blockToBeMined" into the Blockchain "miningJobs"
 		this.chain.miningJobs.set(blockToBeMined.blockDataHash, blockToBeMined);
+
+		console.log('blockToBeMined.transactions =', blockToBeMined.transactions);
+		console.log('this.chain.miningJobs =', this.chain.miningJobs);
+
 
 		// References:
 		// 1) Section "Get Mining Job Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
