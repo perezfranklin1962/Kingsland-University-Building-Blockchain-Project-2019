@@ -100,16 +100,15 @@ module.exports = class Block {
 
 	// Calculating the Block Hash
 	//
-	// Not 100% clear from Project Material or recorded lecture what the Block Hash should be
-	// exactly, but I believe from the "Node/research/Building-the-Blockchain-Node_Blocks.jpg" file,
-	// it's the SHA-256 Hash of the concatenation of the following:
+	// From the Node/research/Building-the-Miners-Hash.jpg file, I conclude that the Block Hash is the
+	// "|" Pipe concatenation of the following:
 	// 1) Block Data Hash
 	// 2) Nonce
 	// 3) DateCreated
 	//
 	// This function should only be executed AFTER the BlockDataHash has been calculated.
 	calculateBlockHash() {
-		let blockHashDataToHashString = this.blockDataHash + this.nonce + this.dateCreated;
+		let blockHashDataToHashString = `${this.blockDataHash}|${this.nonce}|${this.dateCreated}`;
 		let blockHash = CryptoJS.SHA256(blockHashDataToHashString);
 		let blockHashString = blockHash.toString();
 		return blockHashString;
