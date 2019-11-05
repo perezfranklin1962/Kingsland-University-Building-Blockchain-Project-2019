@@ -304,6 +304,10 @@ app.get('/debug/mine/:minerAddress/:difficulty', (req, res) => {
 
 // List All Peers Endpoint
 // This endpoint will return all the peers of the node.
+//
+// References:
+// 1) Node/research/REST-Endpoints_List-All-Peers.jpg file
+// 2) Section "List All Peers Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
 app.get('/peers', (req, res) => {
 	let response = node.listAllPeers();
 	res.end(JSON.stringify(response));

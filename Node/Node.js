@@ -1141,11 +1141,17 @@ module.exports = class Node {
 
 	// List All Peers Endpoint
 	// This endpoint will return all the peers of the node.
+	// RESTFul URL --> /peers
+	//
+	// References:
+	// 1) Node/research/REST-Endpoints_List-All-Peers.jpg file
+	// 2) Section "List All Peers Endpoint" of the Node/research/4_practical-project-rest-api.pdf file
 	listAllPeers() {
-		let response = {
-				message: "The /peers RESTFul URL has been called!"
-		};
+		// Debug Code. Comment out.
+		// this.peers.set("162269f6993d2b5440dddcd6", "http://localhost:5556");
+		// this.peers.set('162266dff5753a87a3e72403', 'http://af6c7a.ngrok.org:5555');
 
+		let response = GeneralUtilities.strMapToObj(this.peers);
 		return response;
 	}
 

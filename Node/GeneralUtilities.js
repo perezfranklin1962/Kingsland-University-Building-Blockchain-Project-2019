@@ -76,7 +76,7 @@ function isValid_ISO_8601_date(value) {
 }
 
 // This method takes a JavaScript Map object that has string keys and returns back a JavaScript object that can later be
-// used inside of a JSON object. Thius conversion is necessary, because there is no Map object and when an attempt was
+// used inside of a JSON object. This conversion is necessary, because there is no Map object and when an attempt was
 // done to do a JSON.stringify on JavaScript object in which one of it's attributes was a JavaScript Map, the Map contents
 // would not appear and only an empty {} would appear. This method fixes this problem.
 //
