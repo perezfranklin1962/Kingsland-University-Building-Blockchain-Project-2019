@@ -158,11 +158,15 @@ module.exports = class Node {
 		if (!GeneralUtilities.isNumeric(blockIndex)) {
 			response = { errorMsg: "Block Index value is not positive numeric value" };
 		}
-		else if (blockIndex >= this.chain.blocks.length) {
-			response = { errorMsg: "Invalid Block Index value - exceeds range of Blocks" }
-		}
-		else {
-			response = this.chain.blocks[blockIndex];
+		else
+		{
+			blockIndex = parseInt(blockIndex);
+			if (blockIndex >= this.chain.blocks.length) {
+				response = { errorMsg: "Invalid Block Index value - exceeds range of Blocks" }
+			}
+			else {
+				response = this.chain.blocks[blockIndex];
+			}
 		}
 
 		return response;
@@ -1074,18 +1078,21 @@ module.exports = class Node {
 			return { errorMsg: "Bad Request: 'difficulty' value is not positive numeric value - it should be a positive numeric value" };
 		}
 
+		// Convert to Integer.
+		difficulty = parseInt(difficulty);
+
 		// Get the Mining Job: This produces a Block to be mined in the "this.chain.miningJobs" Map.
-		let oldDifficulty = this.chain.currentDifficulty;
+		let realDifficulty = this.chain.currentDifficulty;
 		this.chain.currentDifficulty = difficulty;
 		let getMiningJobResponse = this.getMiningJob(minerAddress);
+		this.chain.currentDifficulty = realDifficulty;
 		if (getMiningJobResponse.hasOwnProperty("errorMsg")) {
 			return response;
 		}
-		this.chain.currentDifficulty = oldDifficulty;
 
 		// Get the Block to be Mined
 		let blockToBeMined = this.chain.miningJobs.get(getMiningJobResponse.blockDataHash);
-		if (blockToNeMined === undefined) {
+		if (blockToBeMined === undefined) {
 			return { errorMsg: "Cannot find the Block to be Mined in the Blockchain 'miningJobs' Map" }
 		}
 
@@ -1111,11 +1118,11 @@ module.exports = class Node {
 				blockHash: blockToBeMined.blockHash
 		}
 		let submitMinedJobResponse = this.submitMinedBlock(submitMinedJobJsonInput);
-		if (submitMinedJobResponse.hasOwnProperty("errorMsg") {
+		if (submitMinedJobResponse.hasOwnProperty("errorMsg")) {
 			return submitMinedJobResponse;
 		}
 
-		// The last block in the blockchain is the one that just got mined. Thus, we need to check that that is so.
+		// The last block in the blockchain is the one that just got mined. Thus, we need to check that this is so.
 		let lastBlockInBlockchain = this.chain.blocks[this.chain.blocks.length - 1];
 		if (lastBlockInBlockchain.blockHash !== blockToBeMined.blockHash) {
 			return { errorMsg: `lastBlockInBlockchain.blockHash (${lastBlockInBlockchain.blockHash}) != blockToBeMined.blockHash (${blockToBeMined.blockHash})` }

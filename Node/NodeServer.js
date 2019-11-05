@@ -160,8 +160,7 @@ app.get('/address/:address/balance', (req, res) => {
 // 1) https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
 // 2) https://github.com/axios/axios
 async function sendTransactionToAllPeerNodesVia_RESTFulCall(transactionToBroadcast) {
-	for (var peerNodeId of node.peers) {
-		let peerUrl = node.peers.get(peerNodeId);
+	for (var peerUrl of Array.from(node.peers.values())) {
 		let restfulUrl = peerUrl + "/transactions/send";
 		axios.post(restfulUrl, transactionToBroadcast)
 		  .then(function (response) {
@@ -237,8 +236,7 @@ async function notifyPeersAboutNewlyMinedBlockVia_RESTFulCall() {
 			nodeUrl: node.selfUrl
 	}
 
-	for (var peerNodeId of node.peers) {
-		let peerUrl = node.peers.get(peerNodeId);
+	for (var peerUrl of Array.from(node.peers.values())) {
 		let restfulUrl = peerUrl + "/peers/notify-new-block";
 		axios.post(restfulUrl, notificationMessageContents)
 		  .then(function (response) {
@@ -330,12 +328,14 @@ app.post('/peers/notify-new-block', (req, res) => {
 });
 
 var listeningPort = 5555;
+var listeningHostNameOrIP_Address = "localhost";
 
 // The "commander" Node.js library was used to easily handle command-line arguments.
 var commander = require('commander');
 commander
 	.usage('[OPTIONS]...')
 	.option('-lp, --listeningPort <Port Number>', 'Listening Port Number', listeningPort)
+	.option('-lh, --listeningHost <Host Name or IP Address>', 'Listing Host Name or IP Address', listeningHostNameOrIP_Address)
 	.parse(process.argv);
 
 if (GeneralUtilities.isNumeric(commander.listeningPort)) {
