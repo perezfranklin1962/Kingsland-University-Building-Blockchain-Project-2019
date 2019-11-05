@@ -269,7 +269,7 @@ app.post('/mining/submit-mined-block', (req, res) => {
 	let response = node.submitMinedBlock(req.body);
 
 	if (response.hasOwnProperty("errorMsg")) {
-		if (response.errorMessage.startsWith("Bad Request: ")) {
+		if (response.errorMsg.startsWith("Bad Request: ")) {
 			res.status(HttpStatus.BAD_REQUEST);
 		}
 		else {
@@ -288,10 +288,19 @@ app.post('/mining/submit-mined-block', (req, res) => {
 
 // Debug: Mine a Block Endpoint
 // With this endpoint you can mine with the difficulty that you want. Use it only for debugging purposes.
+//
+// References:
+// 1) Section "Debug: Mine a Block Endpoint" of the 4_practical-project-rest-api.pdf file
+// 2) Node/research/REST-Endpoints_Debug_Mine-a-Block.jpg file
 app.get('/debug/mine/:minerAddress/:difficulty', (req, res) => {
 	let minerAddress = req.params.minerAddress;
 	let difficulty = req.params.difficulty;
 	let response = node.debugMineBlock(minerAddress, difficulty);
+
+	if (response.hasOwnProperty("errorMsg")) {
+		res.status(HttpStatus.BAD_REQUEST);
+	}
+
 	res.end(JSON.stringify(response));
 });
 

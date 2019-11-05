@@ -753,7 +753,7 @@ module.exports = class Node {
 		// Reference: Node/research/The-Mining-Process_Preparation.jpg file
 		//
 		// Source for Coding Technique --> https://www.w3schools.com/jsref/jsref_sort.asp
-		pendingTransactionsConsideredForNextBlock.sort(function(a, b){ return b.fee - a.fee });
+		pendingTransactionsConsideredForNextBlock.sort(function(a, b) { return b.fee - a.fee });
 
 		// As we go through the "pendingTransactionsConsideredForNextBlock", there are some that may be placed in the next block and some that
 		// are not. So, we keep track of this with the below Map where the key will be the 'from' address of the pending transaction. We do this
@@ -797,7 +797,7 @@ module.exports = class Node {
 
 			// Not clear from instructions on how to process here, but I think I heard in the live lecture that if a "from" Public Address
 			// has enough to fund the Transaction Fee but NOT the Transaction Value, just go ahead and add the Transaction in the
-			// next Block ONLY the "tranferSuccessful" be set to a boolean "false". But.. if the "from" Public Address does NOT have enough
+			// next Block ONLY the "tranferSuccessful" is to be set to a boolean "false". But.. if the "from" Public Address does NOT have enough
 			// to the Transaction Fee, then do NO NOT place this Pending Transaction in the Next Block to be Mined.
 			//
 			// We run and "execute" all these Transactions to make sure that they have the proper balances, but remember that they STILL
@@ -928,7 +928,7 @@ module.exports = class Node {
 			return { errorMsg: "Bad Request: field 'nonce' is missing" };
 		}
 		if (!jsonInput.hasOwnProperty("blockHash")) {
-					return { errorMsg: "Bad Request: field 'blockHash' is missing" };
+			return { errorMsg: "Bad Request: field 'blockHash' is missing" };
 		}
 
 		// Check that all the expected fields are of the correct type.
@@ -941,18 +941,18 @@ module.exports = class Node {
 		if (!Number.isInteger(jsonInput.nonce)) {
 			return { errorMsg: "Bad Request: field 'nonce' is not an integer - it should be an integer greater than or equal to 0" };
 		}
-		if (typeof jsonInput.blockash !== 'string') {
+		if (typeof jsonInput.blockHash !== 'string') {
 			return { errorMsg: "Bad Request: field 'blockHash' is not a string - it should be a 64-Hex string" };
 		}
 
 		// Trim all the string field values.
 		jsonInput.blockDataHash = jsonInput.blockDataHash.trim();
 		jsonInput.dateCreated = jsonInput.dateCreated.trim();
-		jsonInput.blockash = jsonInput.blockash.trim();
+		jsonInput.blockHash = jsonInput.blockHash.trim();
 
 		// For the Hex-valued strings, go ahead and convert the strings to lower case.
 		jsonInput.blockDataHash = jsonInput.blockDataHash.toLowerCase();
-		jsonInput.blockash = jsonInput.blockash.toLowerCase();
+		jsonInput.blockHash = jsonInput.blockHash.toLowerCase();
 
 		// Check that the "blockDataHash" and "blockHash" fields have 40-Hex string values.
 		if (!GeneralUtilities.isValid_64_Hex_string(jsonInput.blockDataHash)) {
@@ -996,7 +996,7 @@ module.exports = class Node {
 		// and calculate what the New Block Hash should be.
 		possibleNewBlockCandidate.nonce = jsonInput.nonce;
 		possibleNewBlockCandidate.dateCreated = jsonInput.dateCreated;
-		possibleNewBlockCandidate.calculateBlockHash();
+		possibleNewBlockCandidate.blockHash = possibleNewBlockCandidate.calculateBlockHash();
 
 		// Verify that the given "jsonInput.blockHash" matches the newly calculated block hash.
 		if (possibleNewBlockCandidate.blockHash !== jsonInput.blockHash) {
@@ -1006,6 +1006,8 @@ module.exports = class Node {
 		// Verify that the given Block Hash matches the Block difficulty. So, according to the
 		// Node/research/Network-Difficulty_Static-or-Dynamic.jpg file, if the Block Difficulty is a certain integer value,
 		// then the Block Hash must have the same number of leading zeros in it.
+		//
+		// Reference for Coding Technique --> https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padStart
 		let leadingZeros = ''.padStart(possibleNewBlockCandidate.difficulty, '0');
 		if (!possibleNewBlockCandidate.blockHash.startsWith(leadingZeros)) {
 			return { errorMsg: "Bad Request: 'blockHash' field value provided does not match the Block difficulty" }
@@ -1052,9 +1054,79 @@ module.exports = class Node {
 
 	// Debug: Mine a Block Endpoint
 	// With this endpoint you can mine with the difficulty that you want. Use it only for debugging purposes.
+	// RESTFul URL --> /debug/mine/{minerAddress}/{difficulty}
+	//
+	// It should mine the pending transaction(s) and create the next block.
+	// Executes the entire mining process:
+	// 1) get mining job: Execute "this.getMiningJob(minerAddress)" method
+	// 2) calculate valid proof of work hash: Done inside this method
+	// 2) submit the mined job: Execute "submitMinedBlock(jsonInput)" method
+	//
+	// References:
+	// 1) Section "Debug: Mine a Block Endpoint" of the 4_practical-project-rest-api.pdf file
+	// 2) Node/research/REST-Endpoints_Debug_Mine-a-Block.jpg file
 	debugMineBlock(minerAddress, difficulty) {
+		// Validate inputs
+		if (!GeneralUtilities.isValidPublicAddress(minerAddress)) {
+			return { errorMsg: "Bad Request: 'minerAddress' is not a 40-Hex string - it should be a 40-Hex string" };
+		}
+		if (!GeneralUtilities.isNumeric(difficulty)) {
+			return { errorMsg: "Bad Request: 'difficulty' value is not positive numeric value - it should be a positive numeric value" };
+		}
+
+		// Get the Mining Job: This produces a Block to be mined in the "this.chain.miningJobs" Map.
+		let oldDifficulty = this.chain.currentDifficulty;
+		this.chain.currentDifficulty = difficulty;
+		let getMiningJobResponse = this.getMiningJob(minerAddress);
+		if (getMiningJobResponse.hasOwnProperty("errorMsg")) {
+			return response;
+		}
+		this.chain.currentDifficulty = oldDifficulty;
+
+		// Get the Block to be Mined
+		let blockToBeMined = this.chain.miningJobs.get(getMiningJobResponse.blockDataHash);
+		if (blockToNeMined === undefined) {
+			return { errorMsg: "Cannot find the Block to be Mined in the Blockchain 'miningJobs' Map" }
+		}
+
+		// Calculate valid Proof of Work Hash.
+		// Mine the Block and find the nonce UNTIL a successful mining is done.
+		// Keep iterating in the loop until a Block Data Hash that meets the Block Difficulty level is found.
+		blockToBeMined.dateCreated = new Date().toISOString();
+		blockToBeMined.nonce = 0;
+		let leadingZeros = ''.padStart(blockToBeMined.difficulty, '0');
+		while (true) {
+			blockToBeMined.blockHash = blockToBeMined.calculateBlockHash();
+			if (blockToBeMined.blockHash.startsWith(leadingZeros)) {
+				break;
+			}
+			blockToBeMined.nonce++;
+		}
+
+		// Submit the Mined Job
+		let submitMinedJobJsonInput = {
+				blockDataHash: blockToBeMined.blockDataHash,
+				dateCreated: blockToBeMined.dateCreated,
+				nonce: blockToBeMined.nonce,
+				blockHash: blockToBeMined.blockHash
+		}
+		let submitMinedJobResponse = this.submitMinedBlock(submitMinedJobJsonInput);
+		if (submitMinedJobResponse.hasOwnProperty("errorMsg") {
+			return submitMinedJobResponse;
+		}
+
+		// The last block in the blockchain is the one that just got mined. Thus, we need to check that that is so.
+		let lastBlockInBlockchain = this.chain.blocks[this.chain.blocks.length - 1];
+		if (lastBlockInBlockchain.blockHash !== blockToBeMined.blockHash) {
+			return { errorMsg: `lastBlockInBlockchain.blockHash (${lastBlockInBlockchain.blockHash}) != blockToBeMined.blockHash (${blockToBeMined.blockHash})` }
+		}
+
 		let response = {
-				message: `The /debug/mine/${minerAddress}/${difficulty} RESTFul URL has been called!`
+				index: lastBlockInBlockchain.index,
+				transactions: lastBlockInBlockchain.transactions,
+				difficulty: lastBlockInBlockchain.difficulty,
+				minedBy: lastBlockInBlockchain.minedBy,
+				dateCreated: lastBlockInBlockchain.dateCreated
 		};
 
 		return response;

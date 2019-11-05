@@ -9,7 +9,15 @@
 
 // Verifies if a value contained ONLY digits from 0 to 9.
 function isNumeric(value) {
-    return /^\d+$/.test(value);
+	if (typeof value === 'string') {
+    	return /^\d+$/.test(value);
+	}
+
+	if (typeof value == 'number') {
+		return (value >= 0);
+	}
+
+	return false;
 }
 
 // Verifies that a value is a valid 40-Hex Public Address string
@@ -32,7 +40,7 @@ function isValidPublicKey(value) {
 
 // Verifies that a value is a valid 64-Hex Signature element string
 function isValidSignatureElement(value) {
-	return isValid_64_Hex_string;
+	return isValid_64_Hex_string(value);
 }
 
 // Verifies that a value is a valid 64-Hex string
@@ -112,5 +120,6 @@ module.exports = {
 	isValidPublicAddress,
 	isValid_ISO_8601_date,
 	isValidPublicKey,
-	isValidSignatureElement
+	isValidSignatureElement,
+	isValid_64_Hex_string
 }
