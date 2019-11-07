@@ -1437,7 +1437,7 @@ module.exports = class Node {
 				sendPendingTransactionSuccessResponses: [ ],
 				sendPendingTransactionErrorResponses: [ ],
 				transactionSendSuccessResponses: [ ],
-				transactionSendErrorResponses [ ],
+				transactionSendErrorResponses: [ ],
 				peersDeleted: [ ]
 		}
 
@@ -1708,7 +1708,7 @@ module.exports = class Node {
 					transactionToValidate.senderPubKey, // hex_number[65] string
 					transactionToValidate.senderSignature, // hex_number[2][64] : 2-element array of (64 hex digit) strings
 					transactionToValidate.minedInBlockIndex, // integer / null
-					transactionToValidate.transferSuccessful); { // boolean
+					transactionToValidate.transferSuccessful); // boolean
 			if (transactionToValidate.transactionDataHash !== transactionToValidateCopy.transactionDataHash) {
 				return { errorMsg: `Peer Block ${blockToValidate.index} has invalid Transaction ${i}: field 'transactionDataHash' has an incorrect calculated value` };
 			}
@@ -2032,19 +2032,19 @@ module.exports = class Node {
 					errorType: badRequestErrorType
 				};
 			}
-			if (typeof blockToValidate.prevBlockHash !== 'string')) {
+			if (typeof blockToValidate.prevBlockHash !== 'string') {
 				return {
 					errorMsg: `Peer Block ${i} has a 'prevBlockHash' field that is not a string - it should be a 64-hex number lowercase string`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (typeof blockToValidate.minedBy !== 'string')) {
+			if (typeof blockToValidate.minedBy !== 'string') {
 				return {
 					errorMsg: `Peer Block ${i} has a 'minedBy' field that is not a string - it should be a public address 40-hex number lowercase string`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (typeof blockToValidate.blockDataHash !== 'string')) {
+			if (typeof blockToValidate.blockDataHash !== 'string') {
 				return {
 					errorMsg: `Peer Block ${i} has a 'blockDataHash' field that is not a string - it should be a 64-hex number lowercase string`,
 					errorType: badRequestErrorType
@@ -2056,13 +2056,13 @@ module.exports = class Node {
 					errorType: badRequestErrorType
 				};
 			}
-			if (typeof blockToValidate.dateCreated !== 'string')) {
+			if (typeof blockToValidate.dateCreated !== 'string') {
 				return {
 					errorMsg: `Peer Block ${i} has a 'dateCreated' field that is not a string - it should be an ISO8601 date string as follows: YYYY-MM-DDTHH:MN:SS.MSSZ`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (typeof blockToValidate.blockHash !== 'string')) {
+			if (typeof blockToValidate.blockHash !== 'string') {
 				return {
 					errorMsg: `Peer Block ${i} has a 'blockHash' field that is not a string - it should be a 64-hex number lowercase string`,
 					errorType: badRequestErrorType
@@ -2372,4 +2372,5 @@ module.exports = class Node {
 		let response = { "message": "Thank you for the notification." };
 		return response;
 	}
+
 };
