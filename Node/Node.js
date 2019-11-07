@@ -2220,10 +2220,10 @@ module.exports = class Node {
 		console.log("Inside of synchronizeChainFromPeerInfo!");
 		// If the Peer Chain has less then or equal to the cummlative difficulty of this chain, then just return.
 		if (peerInfo.cumulativeDifficulty <= this.chain.calculateCumulativeDifficulty()) {
-			return { };
+			return { message: `Chain from ${peerInfo.nodeUrl} has a 'cumulativeDifficulty' that is less than or equal to this Node's chain - will not synchronize with peer` };
 		}
 
-		// At this point, we know that the Peer Chain has greater cummlative difficulty than this chain. So, get the Peer Chain's blocks
+		// At this point, we know that the Peer Chain has greater cummlative difficulty than this chain. So, get the Peer Chain's blocks.
 
 		let restfulUrlBlocks = peerInfo.nodeUrl + "/blocks";
 		let responseDataBlocks = undefined;
@@ -2315,12 +2315,59 @@ module.exports = class Node {
 
 	// Notify Peers about New Block Endpoint
 	// This endpoint will notify the peers about a new block.
+	// RESTFul URL --> /peers/notify-new-block
+	//
+	// References:
+	// 1) Node/research/REST-Endpoints_Notify-Peers-about-New_Block.jpg file
+	// 2) Section "Notify Peers about New Block Endpoint" of the 4_practical-project-rest-api.pdf file
+	// 3) Node/research/Notifying-all-Connected-Peers.jpg file
+	//
+	// Not sure what professor wants from this, but if this Node receives this type of RESTFul Web Service call, then
+	// we should syncronize with the node from the receiving Peer is it's chain has a higher "cumulativeDifficulty".
+	//
 	notifyPeersAboutNewBlock(jsonInput) {
-		let response = {
-				message: `POST --> The /peers/notify-new-block RESTFul URL has been called!`,
-				inputBody: jsonInput
-		};
+		// Check that all the expected fields in the jsonInput are present.
+		if (!jsonInput.hasOwnProperty("blocksCount")) {
+			return { errorMsg: "Bad Request: field 'blocksCount' is missing" };
+		}
+		if (!jsonInput.hasOwnProperty("cumulativeDifficulty")) {
+			return { errorMsg: "Bad Request: field 'cumulativeDifficulty' is missing" };
+		}
+		if (!jsonInput.hasOwnProperty("nodeUrl")) {
+			return { errorMsg: "Bad Request: field 'nodeUrl' is missing" };
+		}
 
+		// Check that the expected fields in the jsonInput are of the correct type.
+		if (!Number.isInteger(jsonInput.blocksCount)) {
+			return { errorMsg: "Bad Request: field 'blocksCount' is not an integer - it should be an integer greater than or equal to 1" };
+		}
+		if (!Number.isInteger(jsonInput.cumulativeDifficulty)) {
+			return { errorMsg: "Bad Request: field 'cumulativeDifficulty' is not an integer - it should be an integer greater than or equal to 0" };
+		}
+		if (typeof jsonInput.nodeUrl !== 'string') {
+			return { errorMsg: "Bad Request: field 'nodeUrl' is not a string - it should be a string with a length greater than or equal to 1" };
+		}
+
+		// The "blocksCount" should be equal to 1 or more sue to Genesis Block always being present at the very least.
+		if (jsonInput.blocksCount < 1) {
+			return { errorMsg: "Bad Request: field 'blocksCount' has an integer value less than 1 - it should be an integer greater than or equal to 1" };
+		}
+
+		// The "cumulativeDifficulty" should be greater than or equal to 0.
+		if (jsonInput.cumulativeDifficulty < 0) {
+			return { errorMsg: "Bad Request: field 'blocksCount' has an integer value less than 0 - it should be an integer greater than or equal to 0" };
+		}
+
+		jsonInput.nodeUrl = jsonInput.nodeUrl.trim();
+
+		if (jsonInput.nodeUrl.length == 0) {
+			return { errorMsg: "Bad Request: field 'nodeUrl' is an empty or white spaces string - it should be a non-white space string with a length greater than or equal to 1" };
+		}
+
+		// It may take a while to sync with a Peer Node, so will not wait for the result.
+		this.synchronizeChainFromPeerInfo(jsonInput);
+
+		let response = { "message": "Thank you for the notification." };
 		return response;
 	}
 };
