@@ -1437,7 +1437,8 @@ module.exports = class Node {
 				sendPendingTransactionSuccessResponses: [ ],
 				sendPendingTransactionErrorResponses: [ ],
 				transactionSendSuccessResponses: [ ],
-				transactionSendErrorResponses [ ]
+				transactionSendErrorResponses [ ],
+				peersDeleted: [ ]
 		}
 
 		// Will assume that it's attributes are OK, but will leave checking with the called method.
@@ -1502,9 +1503,10 @@ module.exports = class Node {
   					// If the RESTFul call to the peer yielded no response after the timeout, then just delete the peer node from the list of "peers".
 					if (transactionsSendResponseData === undefined && transactionsSendError === undefined) {
 						this.peers.delete(peerNodeIds[i]);
+						response.peersDeleted.push(peerUrl);
 
 						response.transactionSendErrorResponses.push({
-							errorMsg: `Peer ${peerUrl} did not respond after timeout period from call to /transactions/pending - deleted as peer``
+							errorMsg: `Peer ${peerUrl} did not respond after timeout period from call to /transactions/pending - deleted as peer`
 						});
 					}
 					else if (transactionsSendError !== undefined) {
@@ -2306,6 +2308,7 @@ module.exports = class Node {
   			});
 
   			if (responsePeerNotifyNewBlock === undefined) {
+				this.peers.delete(peerNodeIds[i]);
 				response.warnings.push(`Call to ${restfulUrlPeerNotifyNewBlock} did not respond with OK Status - removing ${peerUrl} from list of peers`);
 			}
 		}

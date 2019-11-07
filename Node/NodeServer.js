@@ -172,6 +172,12 @@ async function sendTransactionToAllPeerNodesVia_RESTFulCall(transactionToBroadca
 	let peerNodeIds = Array.from(node.peers.keys());
 	let peerUrls = Array.from(node.peers.values());
 
+	let response = {
+			peersTransactionsSendSuccessfulResponses: [ ],
+			peersTransactionsSendErrorResponses: [ ],
+			peersDeleted: [ ]
+	};
+
 	for (let i = 0; i = peerUrls.length; i++) {
 		let peerUrl = peerUrls[i];
 		let restfulUrl = peerUrl + "/transactions/send";
@@ -202,9 +208,24 @@ async function sendTransactionToAllPeerNodesVia_RESTFulCall(transactionToBroadca
 		    errorResponse = error;
   		});
 
+  		let theResponse = { };
+
 		// If the RESTFul call to the peer yielded no response after the timeout, then just delete the peer node from the list of "peers".
   		if (normalResponse === undefined && errorResponse === undefined) {
 			node.peers.delete(peerNodeIds[i]);
+			response.peersDeleted.push(peerUrl);
+
+			theResponse.errorMsg = `Peer ${peerUrl} did not respond after timeout period from call to /transactions/send - deleted as peer`;
+			response.peersTransactionsSendErrorResponses.push(theResponse);
+		}
+		else if (errorResponse !== undefined) {
+			theResponse.errorMsg = `Peer ${peerUrl} did not respond with success from call to /transactions/send`;
+			theResponse.error = errorResponse;
+			response.peersTransactionsSendErrorResponses.push(theResponse);
+		}
+		else if (normalResponse !== undefined) {
+			theResponse.message = `Peer ${peerUrl} did respond with success from call to /transactions/send`;
+			response.peersTransactionsSendSuccessfulResponses.push(theResponse);
 		}
 	}
 }
@@ -234,7 +255,7 @@ app.get('/mining/get-mining-job/:minerAddress', (req, res) => {
 	let response = node.getMiningJob(minerAddress);
 
 	if (response.hasOwnProperty("errorMsg")) {
-			res.status(HttpStatus.BAD_REQUEST);
+		res.status(HttpStatus.BAD_REQUEST);
 	}
 
 	res.end(JSON.stringify(response));
@@ -262,11 +283,18 @@ async function notifyPeersAboutNewlyMinedBlockVia_RESTFulCall() {
 			nodeUrl: node.selfUrl
 	}
 
+	let response = {
+			peersNotifyNewBlockSuccessfulResponses: [ ],
+			peersNotifyNewBlockErrorResponses: [ ],
+			peersDeleted: [ ]
+	};
+
 	for (let i = 0; i < peerUrls.length; i++) {
 		let peerUrl = peerUrls[i];
 		let restfulUrl = peerUrl + "/peers/notify-new-block";
 		let normalResponse = undefined;
-		await axios.post(restfulUrl, notificationMessageContents)
+		let errorResponse = undefined;
+		await axios.post(restfulUrl, notificationMessageContents, { timeout: restfulCallTimeout })
 		  .then(function (response) {
 		    // console.log('response = ', response);
 			// console.log('response.data =', response.data);
@@ -274,6 +302,8 @@ async function notifyPeersAboutNewlyMinedBlockVia_RESTFulCall() {
 			// console.log('response.statusText =', response.statusText);
 			// console.log('response.headers =', response.headers);
 		    // console.log('response.config =', response.config);
+
+			normalResponse = response.data;
 		  })
 		  .catch(function (error) {
 		    // console.log('error =', error);
@@ -285,12 +315,30 @@ async function notifyPeersAboutNewlyMinedBlockVia_RESTFulCall() {
 			// console.log('error.response.statusText =', error.response.statusText);
 			// console.log('error.response.headers =', error.response.headers);
 		    // console.log('error.response.config =', error.response.config);
+
+		    errorResponse = error;
   		});
 
   		// Should always get a normal response in this context.
   		// If the RESTFul call to the peer yielded no response after the timeout, then just delete the peer node from the list of "peers".
+  		let theResponse = { };
   		if (normalResponse === undefined) {
 			node.peers.delete(peerNodeIds[i]);
+			response.peersDeleted.push(peerUrl);
+
+			if (errorResponse === undefined) {
+				theResponse.errorMsg = `Peer ${peerUrl} did not respond after timeout period from call to /peers/notify-new-block - deleted as peer`;
+			}
+			else {
+				theResponse.errorMsg = `Peer ${peerUrl} did not respond with Success from call to /peers/notify-new-block - deleted as peer`;
+				theResponse.error = errorResponse;
+			}
+
+			response.peersNotifyNewBlockErrorResponses.push(theResponse);
+		}
+		else {
+			theResponse.message = `Sucessfully sent /peers/notify-new-block to peer ${peerUrl}`;
+			response.peersNotifyNewBlockSuccessfulResponses.push(theResponse);
 		}
 	}
 }
