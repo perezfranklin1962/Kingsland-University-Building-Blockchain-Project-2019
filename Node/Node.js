@@ -1377,8 +1377,150 @@ module.exports = class Node {
     // Synchronizing the pending transactions from certain peer
     // 1) Download (i.e., Execute RESTFul Web Service) /transactions/pending and append the missing ones
     // 2) Transactions with the same hash should never be duplicated
+    //
+    // Reference: Node/research/Synchronizing-the-Chain-and-Pending-Transactions.jpg file
+    //
+    // Input: "peerInfo" information that was obtained by calling /info REST URL
+    //        Checking of validity of the "peerInfo" attributes is responsibility of calling function.
 	async synchronizePendingTransactionFromPeer(peerInfo) {
 		console.log('Inside of synchronizePendingTransactionFromPeer!');
+
+		if (peerInfo.pendingTransactions === 0) {
+			return { message: "No pending transactions to sync with peer" };
+		}
+
+		let transactionsPendingRestfulUrl = peerInfo.nodeUrl + "/transactions/pending";
+		let transactionsPendingResponseData = undefined;
+		await axios.get(transactionsPendingRestfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				transactionsPendingResponseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		// console.log('responseData =', responseData);
+
+		// If the RESTFul call to the peer yielded no response after the timeout or an error response, then just delete the peer node from the
+		// list of "peers".
+		if (transactionsPendingResponseData === undefined) {
+			this.peers.delete(peerInfo.nodeId);
+			return {
+				errorMsg: `Peer ${peerInfo.nodeUrl} did not respond with Status OK from call to /transactions/pending - deleted as peer`
+			}
+		}
+
+		// The "transactionsPendingResponseData" should have the following type of stucture:
+		[
+			{
+				"from" : "f3a1e69b6176052fcc4a3248f1c5a91dea308ca9",
+				"to" : "a1de0763f26176c6d68cc77e0a1c2c42045f2314",
+				"value" : 400000,
+				"fee" : 10,
+				"dateCreated" : "2018-09-04T12:54:24.839Z",
+				"data" : "Faucet -> Alice (again)",
+				"senderPubKey" : "8c4431db61e9095d5794ff53a3ae4171c766cadef015f2e11bec22b98a80f74a0",
+				"transactionDataHash" : "356c5628e7ab659b1d25765e332cfe6eec318008b96d0eba4dfd677032cc670b",
+				"senderSignature" : [ "7787cc91d311b6e5d04acda388f1ce01990b636d8a8026e0fe86704e12c5c1ed",
+					"6293c000ae4af69510f939d3f459e6d7e1da464ec91c7a0a08dd00dc0b3a6cdc" ]
+			}
+		]
+
+		let response = {
+				sendPendingTransactionSuccessResponses: [ ],
+				sendPendingTransactionErrorResponses: [ ],
+				transactionSendSuccessResponses: [ ],
+				transactionSendErrorResponses [ ]
+		}
+
+		// Will assume that it's attributes are OK, but will leave checking with the called method.
+		for (let i = 0; i < transactionsPendingResponseData.length; i++) {
+			// The below function call will take care of following:
+			// 1) Transactions with the same hash should never be duplicated
+			// 2) Place the appropriate peer pending transactions into the "pendingTransactions" array
+			let pendingTransaction = transactionsPendingResponseData[i];
+			let sendTransactionResponse = this.sendTransaction(pendingTransaction);
+
+
+			if (sendTransactionResponse.hasOwnProperty("errorMsg")) {
+				response.sendPendingTransactionErrorResponses.push(sendTransactionResponse);
+			}
+			else {
+				response.sendPendingTransactionSuccessResponses.push(sendTransactionResponse);
+
+				// Notify all my peers about the new Pending Transaction that has been added
+				// to the "pendingTransactions" from the peer. This is done via the
+				// /transactions/send RESTFul Web Service call.
+
+				// The response from the call to "sendTransaction" in this case is as follows:
+				// { "transactionDataHash" : "cd8d9a345bb208c6f9b8acd6b8eef...20c8a" }
+
+				// From the above, I conclude that all the needed inputs to the /transactions/send are in
+				// the "pendindTransaction" variable. We'll just update it's "transactionDataHash" from
+				// the "sendTransactionResponse" variable.
+				pendingTransaction.transactionDataHash = sendTransactionResponse.transactionDataHash;
+
+				let peerNodeIds = Array.from(node.peers.keys());
+				let peerUrls = Array.from(node.peers.values());
+				for (let i = 0; i = peerUrls.length; i++) {
+					let peerUrl = peerUrls[i];
+					let transactionsSendRestfulUrl = peerUrl + "/transactions/send";
+					let transactionsSendResponseData = undefined;
+					let transactionsSendError = undefined;
+					await axios.post(restfulUrl, transactionToBroadcast, {timeout: restfulCallTimeout})
+						.then(function (response) {
+							// console.log('response = ', response);
+							// console.log('response.data =', response.data);
+							// console.log('response.status =', response.status);
+							// console.log('response.statusText =', response.statusText);
+							// console.log('response.headers =', response.headers);
+							// console.log('response.config =', response.config);
+
+							transactionsSendResponseData = response.data;
+						})
+						.catch(function (error) {
+							// console.log('error =', error);
+							// console.log('JSON.parse(error) =', JSON.parse(error));
+							// console.log('error.toJSON() =', error.toJSON());
+							// console.log('error.response =', error.response);
+							// console.log('error.response.data =', error.response.data);
+							// console.log('error.response.status =', error.response.status);
+							// console.log('error.response.statusText =', error.response.statusText);
+							// console.log('error.response.headers =', error.response.headers);
+							// console.log('error.response.config =', error.response.config);
+
+							transactionsSendError = error;
+  					});
+
+  					// If the RESTFul call to the peer yielded no response after the timeout, then just delete the peer node from the list of "peers".
+					if (transactionsSendResponseData === undefined && transactionsSendError === undefined) {
+						this.peers.delete(peerNodeIds[i]);
+
+						response.transactionSendErrorResponses.push({
+							errorMsg: `Peer ${peerUrl} did not respond after timeout period from call to /transactions/pending - deleted as peer``
+						});
+					}
+					else if (transactionsSendError !== undefined) {
+						response.transactionSendErrorResponses.push(transactionsSendError);
+					}
+					else if (transactionsSendResponseData !== undefined) {
+						response.transactionSendSuccessResponses.push(transactionsSendResponseData);
+					}
+
+				} // end for (let i = 0; i = peerUrls.length; i++)
+
+			} // end if (sendTransactionResponse.hasOwnProperty("errorMsg"))
+
+		} // end for (let i = 0; i < transactionsPendingResponseData.length; i++)
+
+		return response;
 	}
 
 	// Validates all the Transactions in a Block of a Peer
