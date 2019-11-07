@@ -470,7 +470,7 @@ var commander = require('commander');
 commander
 	.usage('[OPTIONS]...')
 	.option('-lp, --listeningPort <Port Number>', 'Listening Port Number', listeningPort)
-	.option('-lh, --listeningHost <Host Name or IP Address>', 'Listing Host Name or IP Address', listeningHostNameOrIP_Address)
+	.option('-lh, --listeningHost <Host Name or IP Address>', 'Listening Host Name or IP Address', listeningHostNameOrIP_Address)
 	.parse(process.argv);
 
 if (GeneralUtilities.isNumeric(commander.listeningPort)) {
@@ -480,12 +480,17 @@ else {
 	console.log(`Listening Port Argument entered is not a number: Will use default ${listeningPort} port.`);
 }
 
+listeningHostNameOrIP_Address = commander.listeningHost;
+
 var server = app.listen(listeningPort, function () {
    var host = server.address().address
    var port = server.address().port
 
+   // console.log('host =', host);
+
    if (host == "::") {
-	   host = "localhost";
+	   // host = "localhost";
+	   host = listeningHostNameOrIP_Address;
    }
 
    node = new Node(host, port);

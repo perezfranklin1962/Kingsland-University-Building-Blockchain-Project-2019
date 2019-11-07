@@ -4,6 +4,7 @@ var CryptoJS = require('crypto-js');
 
 module.exports = class Block {
 
+	// Below constructor to be used by Node.
 	constructor(
 		index, // Index: integer (unsigned)
 		transactions, // Transactions : Transaction[]

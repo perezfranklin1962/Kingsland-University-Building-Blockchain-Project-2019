@@ -11,7 +11,9 @@ module.exports = class Blockchain {
 		// then viewed the results of the https://stormy-everglades-34766.herokuapp.com/info URL, I noticed
 		// that the "currentDifficulty" was "5", so I will also initialize the Blockchain "currentDifficulty"
 		// with "5".
-		this.currentDifficulty = 5; // CurrentDifficulty : integer
+		// this.currentDifficulty = 5; // CurrentDifficulty : integer
+		// this.currentDifficulty = 4; // Used for demo as recommened by Patrick Galloway
+		this.currentDifficulty = 3; // For testing only
 
 		// Idea obtained from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map web page.
 		this.miningJobs = new Map(); // MiningJobs: map(blockDataHash --> Block);
@@ -122,6 +124,76 @@ module.exports = class Blockchain {
 		}
 
 		return cumulativeDifficulty;
+	}
+
+	// Recalculates current difficulty if a certain number of past blocks have been mined.
+	//
+	// Returns - boolean value interpreted as follows:
+	// 1) true  : current difficulty has been recalculated and changed
+	// 2) false : current difficulty has either not been recalculated or has not changed
+	recalculateCurrentDifficulty() {
+		let blockInterval = 50; // number of blocks
+
+		// let targetBlockTime = 5000; // milliseconds
+		let targetBlockTime = 2500; // milliseconds
+
+		let moduloDivision = this.blocks.length % blockInterval;
+		if (moduloDivision !== 0) {
+			return false;
+		}
+
+		let numberOfBlockIntervalsCovered = 0;
+		let numberOfBlockIntervalsToCover = this.blocks.length;
+		// let numberOfBlockIntervalsToCover = blockInterval;
+		let blockIndex = this.blocks.length - 1;
+		let totalBlockTimes = 0;
+		while (true) {
+			let previousBlockIndex = blockIndex - 1;
+
+			// I will not count the Genesis Block, because it's "dateCreated" is hard-coded to a timestamp
+			// that is not recent and will throw off the average.
+			if (previousBlockIndex < 1) {
+				break;
+			}
+
+			let firstBlockDateTime = new Date(this.blocks[previousBlockIndex].dateCreated);
+			let secondBlockDateTime = new Date(this.blocks[blockIndex].dateCreated);
+
+			let thisBlockTime = Math.abs(secondBlockDateTime.getTime() - firstBlockDateTime.getTime());
+			totalBlockTimes += thisBlockTime;
+
+			numberOfBlockIntervalsCovered += 1;
+			if (numberOfBlockIntervalsCovered >= numberOfBlockIntervalsToCover) {
+				break;
+			}
+
+			blockIndex -= 1;
+			if (blockIndex < 1) {
+				break;
+			}
+		}
+
+		let averageBlockTime = totalBlockTimes / numberOfBlockIntervalsCovered;
+		console.log('averageBlockTime =', averageBlockTime);
+		console.log('   totalBlockTimes =', totalBlockTimes);
+		console.log('   numberOfBlockIntervalsCovered =', numberOfBlockIntervalsCovered);
+
+		if (averageBlockTime < targetBlockTime) {
+			this.currentDifficulty += 1;
+			console.log('   this.currentDifficulty =', this.currentDifficulty);
+			return true;
+		}
+		if (averageBlockTime > targetBlockTime) {
+			this.currentDifficulty -= 1;
+			if (this.currentDifficulty < 0) {
+				this.currentDifficulty = 0;
+			}
+
+			console.log('   this.currentDifficulty =', this.currentDifficulty);
+			return true;
+		}
+
+		return false;
 	}
 
 	// This method returns back a copy of this Blockchain JavaScript Object and returns back a JavaScript Object

@@ -1041,8 +1041,9 @@ module.exports = class Node {
 
 		// Does there exist in the Blockchain a Block that is in the same slot that this "possibleNewBlockCandidate" is suppose to
 		// occupy? In other words, has a Block with the same Block Index as this "possibleNewBlockCandidate" already present in the
-		// Blockchain? If so, then we cannot place this "possibleNewBlockCandidate" in the Blockchain.
-		if (possibleNewBlockCandidate.index != this.chain.blocks.length) {
+		// Blockchain? Is there a Block that alreadt has the same Block Index? If so, then we cannot place this "possibleNewBlockCandidate"
+		// in the Blockchain.
+		if (possibleNewBlockCandidate.index < this.chain.blocks.length) {
 			return { errorMsg: "Block with same Block Index already present in Blockchain" }
 		}
 
@@ -1066,6 +1067,9 @@ module.exports = class Node {
 			this.chain.pendingTransactions = this.chain.pendingTransactions.filter(aTransaction =>
 				aTransaction.transactionDataHash !== transactionToRemoveFromPendingTransactions.transactionDataHash);
 		}
+
+		// Re-calculate the Block Difficulty. The called function is smart enough to know whether the actual re-calculation needs to be done.
+		this.chain.recalculateCurrentDifficulty();
 
 		// Reference: Node/research/Implementing-the-Mining_Submit-Block.jpg file
 		let response = {

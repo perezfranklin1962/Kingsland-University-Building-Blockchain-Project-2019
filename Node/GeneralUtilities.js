@@ -13,7 +13,7 @@ function isNumeric(value) {
     	return /^\d+$/.test(value);
 	}
 
-	if (typeof value == 'number') {
+	if (typeof value === 'number') {
 		return (value >= 0);
 	}
 
