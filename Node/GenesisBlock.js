@@ -38,7 +38,7 @@ const genesisCoinbaseTransaction = new Transaction(
 
 // Source: Node/research/The-Genesis-Block_The-Start-of-the-Chain.jpg file
 //
-// No specification on what to put in the PrevBlockHas, so I'll make a judgement call
+// No specification on what to put in the PrevBlockHash, so I'll make a judgement call
 // and set it to "0".
 const genesisBlock = new Block(
 	0, // Index: integer (unsigned)

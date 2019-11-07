@@ -29,6 +29,7 @@ module.exports = class Transaction {
 		this.senderPubKey = senderPubKey; // hex_number[65] string
 
 		// Hash below dependent on above attributes.
+		// Result is: 64-Hex lowercase string
 		this.transactionDataHash = this.calculateTransactionDataHash();
 
 		this.senderSignature = senderSignature; // hex_number[2][64] : 2-element array of (64 hex digit) strings
@@ -48,6 +49,8 @@ module.exports = class Transaction {
     //
     // Although not stated, I'll calculate the JSON formatted string of the
     // 'from', 'to', 'value', 'fee', 'dateCreated', 'data', and 'senderPubKey' fields.
+    //
+    // Return value: 64-Hex lowercase string
 	calculateTransactionDataHash() {
 		let transactionDataToHashJson = {
 			'from': this.from,

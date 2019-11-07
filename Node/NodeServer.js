@@ -33,6 +33,15 @@ var HttpStatus = require('http-status-codes');
 // 2) https://github.com/axios/axios
 var axios = require('axios');
 
+// As per Patrick Galloway:
+// 1) If there is an error in communications, or if the peer take longer than 60 seconds to respond, the peer should be dropped.
+// 2) If I call a peer with ANY RESTFul Web Service and I get back an error or there's no response in 60 seconds, I will drop the peer.
+//
+// References:
+// 1) Node/research/Patrick-Galloway_What-to-do-if-Peer-does=not-respond-or-errors-out.jpg file
+// 2) https://medium.com/@masnun/handling-timeout-in-axios-479269d83c68
+var restfulCallTimeout = 60000; // 60 seconds or 60000 milliseconds
+
 // This responds with "Hello World" on the homepage
 app.get('/', function (req, res) {
    console.log("Got a GET request for the homepage");
@@ -160,28 +169,43 @@ app.get('/address/:address/balance', (req, res) => {
 // 1) https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
 // 2) https://github.com/axios/axios
 async function sendTransactionToAllPeerNodesVia_RESTFulCall(transactionToBroadcast) {
-	for (var peerUrl of Array.from(node.peers.values())) {
+	let peerNodeIds = Array.from(node.peers.keys());
+	let peerUrls = Array.from(node.peers.values());
+
+	for (let i = 0; i = peerUrls.length; i++) {
+		let peerUrl = peerUrls[i];
 		let restfulUrl = peerUrl + "/transactions/send";
-		axios.post(restfulUrl, transactionToBroadcast)
+		let normalResponse = undefined;
+		let errorResponse = undefined;
+		await axios.post(restfulUrl, transactionToBroadcast, {timeout: restfulCallTimeout})
 		  .then(function (response) {
 		    // console.log('response = ', response);
-			console.log('response.data =', response.data);
-			console.log('response.status =', response.status);
-			console.log('response.statusText =', response.statusText);
-			console.log('response.headers =', response.headers);
-		    console.log('response.config =', response.config);
+			// console.log('response.data =', response.data);
+			// console.log('response.status =', response.status);
+			// console.log('response.statusText =', response.statusText);
+			// console.log('response.headers =', response.headers);
+		    // console.log('response.config =', response.config);
+
+		    normalResponse = response;
 		  })
 		  .catch(function (error) {
-		    console.log('error =', error);
+		    // console.log('error =', error);
 		    // console.log('JSON.parse(error) =', JSON.parse(error));
 		    // console.log('error.toJSON() =', error.toJSON());
 		    // console.log('error.response =', error.response);
-		    console.log('error.response.data =', error.response.data);
-			console.log('error.response.status =', error.response.status);
-			console.log('error.response.statusText =', error.response.statusText);
-			console.log('error.response.headers =', error.response.headers);
-		    console.log('error.response.config =', error.response.config);
+		    // console.log('error.response.data =', error.response.data);
+			// console.log('error.response.status =', error.response.status);
+			// console.log('error.response.statusText =', error.response.statusText);
+			// console.log('error.response.headers =', error.response.headers);
+		    // console.log('error.response.config =', error.response.config);
+
+		    errorResponse = error;
   		});
+
+		// If the RESTFul call to the peer yielded no response after the timeout, then just delete the peer node from the list of "peers".
+  		if (normalResponse === undefined && errorResponse === undefined) {
+			node.peers.delete(peerNodeIds[i]);
+		}
 	}
 }
 
@@ -227,6 +251,8 @@ app.get('/mining/get-mining-job/:minerAddress', (req, res) => {
 // 1) https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
 // 2) https://github.com/axios/axios
 async function notifyPeersAboutNewlyMinedBlockVia_RESTFulCall() {
+	let peerNodeIds = Array.from(node.peers.keys());
+	let peerUrls = Array.from(node.peers.values());
 
 	// Not sure what the "nodeUrl" value should be from the project papers, but it's probably the
 	// Node URL of this Node.
@@ -236,28 +262,36 @@ async function notifyPeersAboutNewlyMinedBlockVia_RESTFulCall() {
 			nodeUrl: node.selfUrl
 	}
 
-	for (var peerUrl of Array.from(node.peers.values())) {
+	for (let i = 0; i < peerUrls.length; i++) {
+		let peerUrl = peerUrls[i];
 		let restfulUrl = peerUrl + "/peers/notify-new-block";
-		axios.post(restfulUrl, notificationMessageContents)
+		let normalResponse = undefined;
+		await axios.post(restfulUrl, notificationMessageContents)
 		  .then(function (response) {
 		    // console.log('response = ', response);
-			console.log('response.data =', response.data);
-			console.log('response.status =', response.status);
-			console.log('response.statusText =', response.statusText);
-			console.log('response.headers =', response.headers);
-		    console.log('response.config =', response.config);
+			// console.log('response.data =', response.data);
+			// console.log('response.status =', response.status);
+			// console.log('response.statusText =', response.statusText);
+			// console.log('response.headers =', response.headers);
+		    // console.log('response.config =', response.config);
 		  })
 		  .catch(function (error) {
-		    console.log('error =', error);
+		    // console.log('error =', error);
 		    // console.log('JSON.parse(error) =', JSON.parse(error));
 		    // console.log('error.toJSON() =', error.toJSON());
 		    // console.log('error.response =', error.response);
-		    console.log('error.response.data =', error.response.data);
-			console.log('error.response.status =', error.response.status);
-			console.log('error.response.statusText =', error.response.statusText);
-			console.log('error.response.headers =', error.response.headers);
-		    console.log('error.response.config =', error.response.config);
+		    // console.log('error.response.data =', error.response.data);
+			// console.log('error.response.status =', error.response.status);
+			// console.log('error.response.statusText =', error.response.statusText);
+			// console.log('error.response.headers =', error.response.headers);
+		    // console.log('error.response.config =', error.response.config);
   		});
+
+  		// Should always get a normal response in this context.
+  		// If the RESTFul call to the peer yielded no response after the timeout, then just delete the peer node from the list of "peers".
+  		if (normalResponse === undefined) {
+			node.peers.delete(peerNodeIds[i]);
+		}
 	}
 }
 
@@ -315,9 +349,53 @@ app.get('/peers', (req, res) => {
 
 // Connect a Peer Endpoint
 // With this endpoint, you can manually connect to other nodes.
+//
+// References:
+// 1) Section "Connect a Peer Endpoint" of the 4_practical-project-rest-api.pdf file
+// 2) Node/research/REST-Endpoints_Connect-a-Peer.jpg file
+// 3) Node/research/REST-Endpoints_Connect-a-Peer_Invalid.jpg file
+// 4) Node/research/Connecting-to-a-Peer.jpg file
+// 5) Node/research/Synchronizing-the-Chain-and-Pending-Transactions.jpg file
+// 6) Node/research/Validating-a-Chain.jpg file
+// 7) Node/research/Validating-a-Chain_2.jpg file
 app.post('/peers/connect', (req, res) => {
+	// Below code would not work, because I had to make the "node.connectToPeer" method asynchronous so I could use
+	// "await" inside the "node.connectToPeer" method to wait for the various RESTFul Web Service calls I made using
+	// "axios" library.
+	/*
 	let response = node.connectToPeer(req.body);
+
+	if (response.hasOwnProperty("errorMsg")) {
+		if (response.errorType === "Bad Request") {
+			res.status(HttpStatus.BAD_REQUEST);
+		}
+		else if (response.errorType === "Conflict") {
+			res.status(HttpStatus.CONFLICT);
+		}
+
+		response = { errorMsg: response.errorMsg }
+	}
+
 	res.end(JSON.stringify(response));
+	*/
+
+    // Used coding technique described in the https://tutorialzine.com/2017/07/javascript-async-await-explained
+    // web page to call an Asynchronous fuction and get it's response.
+	node.connectToPeer(req.body).then( function(response) {
+    	if (response.hasOwnProperty("errorMsg")) {
+			if (response.errorType === "Bad Request") {
+				res.status(HttpStatus.BAD_REQUEST);
+			}
+			else if (response.errorType === "Conflict") {
+				res.status(HttpStatus.CONFLICT);
+			}
+
+			response = { errorMsg: response.errorMsg }
+		}
+
+		// console.log('node.connectToPeer response =', response);
+		res.end(JSON.stringify(response));
+	});
 });
 
 // Notify Peers about New Block Endpoint
