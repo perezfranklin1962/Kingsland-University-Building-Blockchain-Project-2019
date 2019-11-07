@@ -1449,7 +1449,6 @@ module.exports = class Node {
 			let pendingTransaction = transactionsPendingResponseData[i];
 			let sendTransactionResponse = this.sendTransaction(pendingTransaction);
 
-
 			if (sendTransactionResponse.hasOwnProperty("errorMsg")) {
 				response.sendPendingTransactionErrorResponses.push(sendTransactionResponse);
 			}
