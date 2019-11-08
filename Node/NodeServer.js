@@ -357,7 +357,7 @@ app.post('/mining/submit-mined-block', (req, res) => {
 		}
 	}
 	else { // Mined Block successfuly placed in Blockchain
-		// When a Block has been successguly Mined and placed in the Blockchain, then all peers are
+		// When a Block has been successfully Mined and placed in the Blockchain, then all peers are
 		//   notified about the new mined block.
 		// Reference: Node/research/Processing-a-Mined-Block.jpg file
 		notifyPeersAboutNewlyMinedBlockVia_RESTFulCall();
