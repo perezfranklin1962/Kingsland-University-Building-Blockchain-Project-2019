@@ -14,7 +14,9 @@ const allZeros_64_Hex_String = "000000000000000000000000000000000000000000000000
 // should be a constant in ISO8601_string date format.
 const genesisDateCreated = "2019-11-01T18:51:24.965Z";
 
-// Source: Node/research/Coins-and-Rewards.jpg file
+// Sources:
+// 1) Node/research/Coins-and-Rewards.jpg file
+// 2) Node/research/The-Faucet-Transaction-in-the-Genesis-Block.jpg file
 //
 // 1 coin = 1,000 milli-coins = 1,000,000 micro-coins
 //

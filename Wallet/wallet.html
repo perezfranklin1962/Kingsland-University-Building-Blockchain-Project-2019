@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+
+<html>
+
+<!--
+
+Idea for use of require.js came from the following:
+1) https://stackoverflow.com/questions/23603514/javascript-require-function-giving-referenceerror-require-is-not-defined
+2) https://requirejs.org/docs/release/2.3.5/minified/require.js
+
+Use of "require.js" was causing problems so I got rid of it.
+
+Idea of use of "elliptic.min.js" file came from the following:
+1) https://github.com/indutny/elliptic/tree/master/dist
+2) https://github.com/indutny/elliptic/blob/master/dist/elliptic.min.js
+3) https://raw.githubusercontent.com/indutny/elliptic/master/dist/elliptic.min.js
+
+Idea of use of "crypto-js.js" file came from the following:
+1) https://devstore.io/js/crypto-js
+2) https://github.com/brix/crypto-js
+3) https://bower.io
+
+-->
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple 'Enter the Private Key' and 'Generate Private Key' Wallet for FranklinCoin Blockchain</title>
+    <link rel="stylesheet" type="text/css" href="wallet.css"/>
+    <script src="lib/ethers.min.js"></script>
+    <script src="lib/jquery-3.1.1.min.js"></script>
+    <script src="lib/jquery.qrcode.min.js"></script>
+    <!-- <script src="lib/require.js"></script> -->
+    <script src="lib/GeneralUtilities.js"></script>
+    <script src="lib/elliptic.min.js"></script>
+    <script src="lib/crypto-js.js"></script>
+    <script src="lib/CryptoUtilities.js"></script>
+    <script src="wallet.js"></script>
+</head>
+
+<body>
+<header id="menu">
+    <a href="#" id="linkHome">Home</a>
+    <a href="#" id="linkCreateNewWallet">Create New Wallet</a>
+    <a href="#" id="linkOpenExistingWallet">Open Existing Wallet</a>
+    <a href="#" id="linkShowAccountBalance" class="after-login">Account Balance</a>
+    <a href="#" id="linkSendTransaction" class="after-login">Send Transaction</a>
+    <a href="#" id="linkDelete" class="after-login">Logout</a>
+</header>
+
+<main>
+    <section id="loadingBox">Loading ...</section>
+
+    <section id="infoBox"><header>x</header><p>Info</p></section>
+
+    <section id="errorBox"><header>x</header><p>Error</p></section>
+
+    <section id="viewHome">
+        <h1>Simple 'Enter the Private Key' and 'Generate Private Key' Wallet for FranklinCoin Blockchain</h1>
+        Welcome to the simple wallet using <b>FranklinCoin Blockchain</b>. The FranklinCoin Blockhain was a Blockchain created by Franklin Perez as part of the <b>Kingsland University Building Blockchain Project 2019</b> assignment.
+        <ul>
+            <li>The wallet is a simple 'Enter the Private Key' and 'Generate Private Key' Wallet in the Session Storage.</li>
+            <li>Wallet can be created by clicking on the'Generate Now' button of the 'Create New Wallet' section.</li>
+            <li>You may also open an existing Wallet by clicking on the 'Open Wallet' button of the 'Open Existing Wallet' section and entering your Private Key.</li>
+            <li>By a valid Private Key, the wallet can:
+                <ul>
+                    <li>Open Existing Wallet</li>
+                    <li>Show Account Balance</li>
+                    <li>Send Transaction</li>
+                    <li>Logout</li>
+                </ul>
+            </li>
+            <li>Make sure to click on Logout once you are finished using the Wallet so that the Private Key may be removed from the Session Storage.</li>
+        </ul>
+    </section>
+
+    <section id="viewCreateNewWallet">
+        <h1>Create a New Wallet</h1>
+        <p>Generate a new wallet: random private key -> public key -> address.</p>
+        <input type="button" id="buttonGenerateNewWallet" value="Generate Now"/>
+        <textarea id="textareaCreateWalletResult" class="result" readonly="true"></textarea>
+    </section>
+
+    <section id="viewOpenExistingWallet">
+        <h1>Open an Existing Wallet</h1>
+        <p>Enter your wallet private key (64 hex lowercase digits): </p>
+        <input type="text" size="64" id="textOpenExistingWallet">
+        <input type="button" id="buttonOpenExistingWallet" value="Open Wallet"/>
+        <textarea id="textareaOpenWalletResult" class="result" readonly="true"></textarea>
+    </section>
+
+    <section id="viewShowAccountBalance">
+        <h1>View Account Balance</h1>
+        <span>Public Address (40 Hex lowercase digits): </span><input type="text" readonly="true" size="65" class="readOnlyInputText" id="textPublicAddressViewAccountBalance"><br>
+        <span>Blockchain Node (URL Format): </span><input type="text" size="80" id="textBlockChainNodeViewAccountBalance"><br><br>
+        <input type="button" id="buttonViewAccountBalance" value="Display Balance"/><br>
+		<textarea id="textareaDisplayBalance" class="result" readonly="true"></textarea>
+    </section>
+
+    <section id="viewSendTransaction">
+        <h1>Send Transaction</h1>
+		Sender (Public Address - 40 Hex lowercase digits): <input type="text" size="65" class="readOnlyInputText" readonly="true" id="senderPublicAddress"><br>
+		Recipient (Public Address - 40 Hex lowercase digits): <input type="text" size="65" id="recipientPublicAddress"><br>
+		Value (Micro-coins - Positive Integer): <input type="text" size="13" id="valueAmountToSend"><br><br>
+        <input type="button" id="buttonSignTransaction" value="Sign Transaction"/><br>
+        <textarea id="textareaSignTransaction" class="result" readonly="true"></textarea><br>
+        Blockchain Node (URL Format): <input type="text" size="80" id="blockchainNodeViewSendTransaction"><br><br>
+        <input type="button" id="buttonSendSignedTransaction" value="Send Transaction"/><br>
+        <textarea id="textareaSendTransactionResult" class="result" readonly="true"></textarea>
+    </section>
+</main>
+
+<footer>FranklinCoin Blockchain Wallet - educational blockchain testing network</footer>
+</body>
+</html>

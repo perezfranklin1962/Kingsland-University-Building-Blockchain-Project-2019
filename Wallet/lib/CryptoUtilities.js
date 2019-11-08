@@ -14,12 +14,35 @@
 
 // Import the elliptic library and initialize a curve.
 // Reference --> https://www.savjee.be/2018/10/Signing-transactions-blockchain-javascript
-const EC = require('elliptic').ec;
-const ec = new EC('secp256k1');
+// Below use bia "require" does not work in browser.
+// const EC = require('elliptic').ec;
+// const ec = new EC('secp256k1');
+
+// Below is what worked in the browser after including the "elliptic.min.js" file in the "<head>" section
+// of the "wallet.html" file. Read the comments in the "wallet.html" file to determine how the "elliptic.min.js" file
+// was obtained.
+//
+// Reference --> https://github.com/indutny/elliptic/issues/6
+const ec = new elliptic.ec('secp256k1');
 
 // Need to import this to later get RIPEMD-160 of Public Key
 // Reference --> https://devstore.io/js/crypto-js
-var CryptoJS = require('crypto-js');
+// var CryptoJS = require('crypto-js');
+
+// Use of "require" from above did not work inside the brwoser.
+// The "CryptoJS" is created automatically by using the "bower" created "crypto-js.js" file and including
+// the reference to the "crypto-js.js" file inside of the "wallet.html" file under the "<head>" section.
+//
+// Procedure to create "crypto-js.js" file:
+// 1) Install "bower" by executing following inside of Ubuntu 18.04 LTS: npm install -g bower
+// 2) Created /mnt/d/Bower directory and went to the /mnt/d/Bower directory: bower install crypto-js
+// 3) Step #2 creates following file: /mnt/d/Bower/bower_components/crypto-js/crypto-js.js
+// 4) Copied /mnt/d/Bower/bower_components/crypto-js/crypto-js.js into the "lib" directory
+//
+// References for "bower" created "crypto-js.js" file:
+// 1) https://devstore.io/js/crypto-js
+// 2) https://github.com/brix/crypto-js
+// 3) https://bower.io
 
 // Idea for random generation of Private Key came from the https://www.savjee.be/2018/10/Signing-transactions-blockchain-javascript
 // web page. The Private Key is returned back as a 64-digit Hex string.
@@ -173,11 +196,3 @@ function verifySignature(message, publicKeyCompressedStr, signature) {
   	return isVerified;
 }
 
-module.exports = {
-	generateRandomPrivateKey,
-	getPublicKeyFromPrivateKey,
-	getPublicAddressFromPublicKey,
-	createSignature,
-	convertCompressedPublicKeyToUncompressed,
-	verifySignature
-};
