@@ -121,7 +121,7 @@ async function infiniteMining() {
 		console.log();
 
 		// Take a mining job from the Node through it's REST API.
-		console.log('Take a mining job from the Node through its REST API.');
+		console.log(`Take a mining job from the Node through it's REST API.`);
 		console.log('   GET RESTFul URL -->', getMiningJobRestfulUrl);
 		let getMiningJobSuccessfulResponse = undefined;
 		let getMiningJobErrorResponse = undefined;
