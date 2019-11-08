@@ -239,7 +239,7 @@ async function infiniteMining() {
 			console.log(`Error shown below occurred when POST RESTFul call to ${submitMinedJobRestfulUrl} made:`);
 			console.log(submitMinedJobErrorResponse);
 			console.log();
-			console.log('Although Error returned no need to stop the Miner, because perhaps soome other Miner was able to mine the block first...');
+			console.log('Although Error returned, no need to stop the Miner, because perhaps some other Miner was able to mine the block first...');
 
 			if (submitMinedJobErrorResponse.response !== undefined) {
 				if (submitMinedJobErrorResponse.response.status !== undefined) {
