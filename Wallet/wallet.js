@@ -226,7 +226,17 @@ $(document).ready(function () {
 			})
 			.catch(function (error) {
 				// console.log('error =', error);
-				restfulErrorResponse = error;
+
+				// When in browser, to get the response body, you must get it from the "error.response" or else
+				// you will not be able to get it outside of here.
+				//
+				// Reference ---> https://github.com/axios/axios/issues/960
+				if (error.response === undefined) {
+					restfulErrorResponse = error;
+				}
+				else {
+					restfulErrorResponse = error.response;
+				}
   		});
 
   		hideInfo();
@@ -241,7 +251,7 @@ $(document).ready(function () {
 			showError(errorMessage);
 		}
 		else if (restfulErrorResponse !== undefined) {
-			errorMessage = `Attempt to call ${restfulUrl } to obtain account balance failed due to error message - unable to ` +
+			errorMessage = `Attempt to call ${restfulUrl } to obtain account balance failed due to error encountered - unable to ` +
 				`get account balance. See details of error in text area under the 'Display Balance' button.`;
 			showError(errorMessage);
 
@@ -352,7 +362,7 @@ $(document).ready(function () {
 		$('#textareaSignTransaction').val(displaySignedTransaction);
     }
 
-    function sendSignedTransaction() {
+    async function sendSignedTransaction() {
 		console.log('sendSignedTransaction function entered');
 
 		// Validate the Chain Node URL entered.
@@ -378,10 +388,116 @@ $(document).ready(function () {
 		}
 
 		console.log('sendSignedTransaction function passed all input tests');
+
+		// There should be no parse failure, because the $('#textareaSignTransaction') is readonly and
+		// created by this Wallet. Also, everything needed should be there already.
+		let signedTransactionJson = JSON.parse(signedTransactionJsonString);
+
+		let restfulUrl = nodeIdUrl + "/transactions/send";
+		let restfulSuccessfulResponse = undefined;
+		let restfulErrorResponse = undefined;
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		await axios.post(restfulUrl, signedTransactionJson, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+				restfulSuccessfulResponse = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', JSON.stringify(error, undefined, 2));
+				// console.log('error.response =', error.response);
+
+				// When in browser, to get the response body, you must get it from the "error.response" or else
+				// you will not be able to get it outside of here.
+				//
+				// Reference ---> https://github.com/axios/axios/issues/960
+				if (error.response === undefined) {
+					restfulErrorResponse = error;
+				}
+				else {
+					restfulErrorResponse = error.response;
+				}
+
+  			});
+
+  		hideInfo();
+
+  		let errorMessage = undefined;
+  		let displaySendTransactionInfo = undefined;
+
+		// If the RESTFul call to Blockchain Node yielded no response after the timeout, then just display an error message.
+		if (restfulSuccessfulResponse === undefined && restfulErrorResponse === undefined) {
+			errorMessage = `Attempt to call ${restfulUrl } to send transaction failed due to timeout - unable to ` +
+				`send the transaction.`
+			showError(errorMessage);
+		}
+		else if (restfulErrorResponse !== undefined) {
+			errorMessage = `Attempt to call ${restfulUrl } to send transaction failed due to error encountered - unable to ` +
+				`send the transaction. See details of error in text area under the 'Send Transaction' button.`;
+			showError(errorMessage);
+
+			// Technique to prettify obtained from the https://coderwall.com/p/buwfjw/pretty-print-json-with-native-javascript
+			// web page.
+			displaySendTransactionInfo = JSON.stringify(restfulErrorResponse, undefined, 2);
+
+			if (restfulErrorResponse.data !== undefined) {
+				displaySendTransactionInfo = "Error Status: " + restfulErrorResponse.status + "\n" +
+					"Error Status Description: " + restfulErrorResponse.statusText + "\n\n" +
+					"Error Message Details: \n";
+
+				if (restfulErrorResponse.data.errorMsg !== undefined) {
+					displaySendTransactionInfo += restfulErrorResponse.data.errorMsg;
+				}
+				else {
+					displaySendTransactionInfo += JSON.stringify(restfulErrorResponse.data, undefined, 2);
+				}
+			}
+
+			$('#textareaSendTransactionResult').val(displaySendTransactionInfo);
+		}
+		else { // restfulSuccessfulResponse !== undefined
+			let displaySendTransactionInfo = "Transaction successfully sent and placed in Pending Transactions List. \n" +
+					"Transaction Hash: " + restfulSuccessfulResponse.transactionDataHash + "\n\n" +
+					"Please go to the " + nodeIdUrl + "/transactions/" + restfulSuccessfulResponse.transactionDataHash +
+					" to get the most current status of your Transaction. Eventually, your Transaction will be confirmed.";
+
+			$('#textareaSendTransactionResult').val(displaySendTransactionInfo);
+		}
     }
 
     function deleteWallet() {
         sessionStorage.clear();
+
+        // Clear all the fields.
+
+		// Tab: Create a New Wallet
+        $('#textareaCreateWalletResult').val('');
+
+		// Tab: Open an Existing Wallet
+        $('#textOpenExistingWallet').val('');
+        $('#textareaOpenWalletResult').val('');
+
+		// Tab: View Account Balance
+        $('#textPublicAddressViewAccountBalance').val('');
+        $('#textBlockChainNodeViewAccountBalance').val('');
+        $('#textareaDisplayBalance').val('');
+
+        // Tab: Send Transaction
+        $('#senderPublicAddress').val('');
+        $('#recipientPublicAddress').val('');
+        $('#valueAmountToSend').val('');
+        $('#feeAmountToSend').val('');
+        $('#dataToSend').val('');
+        $('#textareaSignTransaction').val('');
+        $('#blockchainNodeViewSendTransaction').val('');
+        $('#textareaSendTransactionResult').val('');
+
         showView('viewHome');
     }
 

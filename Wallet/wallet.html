@@ -88,10 +88,15 @@ Idea of use of "axios.js" file inside of browser came form the following:
         <textarea id="textareaCreateWalletResult" class="result" readonly="true"></textarea>
     </section>
 
+    <!--
+    	Setting of "autocomplete" to "off" obtained from the https://stackoverflow.com/questions/24211814/clear-input-history and
+    	https://stackoverflow.com/questions/39584213/dynamically-dismiss-autofill-menu-of-input web pages.
+    -->
+
     <section id="viewOpenExistingWallet">
         <h1>Open an Existing Wallet</h1>
         <p>Enter your wallet private key (64 hex lowercase digits): </p>
-        <input type="text" size="64" id="textOpenExistingWallet">
+        <input type="text" size="64" autocomplete="off" id="textOpenExistingWallet">
         <input type="button" id="buttonOpenExistingWallet" value="Open Wallet"/>
         <input type="button" id="buttonClearFieldsInOpenExistingWallet" value="Clear"/>
         <textarea id="textareaOpenWalletResult" class="result" readonly="true"></textarea>
