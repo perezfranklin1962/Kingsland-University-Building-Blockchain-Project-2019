@@ -10,15 +10,21 @@ Idea for use of require.js came from the following:
 
 Use of "require.js" was causing problems so I got rid of it.
 
-Idea of use of "elliptic.min.js" file came from the following:
+Idea of use of "elliptic.min.js" file inside of browser came from the following:
 1) https://github.com/indutny/elliptic/tree/master/dist
 2) https://github.com/indutny/elliptic/blob/master/dist/elliptic.min.js
 3) https://raw.githubusercontent.com/indutny/elliptic/master/dist/elliptic.min.js
 
-Idea of use of "crypto-js.js" file came from the following:
+Idea of use of "crypto-js.js" file inside of browser came from the following:
 1) https://devstore.io/js/crypto-js
 2) https://github.com/brix/crypto-js
 3) https://bower.io
+
+Idea of use of "axios.js" file inside of browser came form the following:
+1) https://github.com/axios/axios
+2) https://flaviocopes.com/axios
+3) https://unpkg.com/axios/dist/axios.min.js
+4) https://flaviocopes.com/cors
 
 -->
 
@@ -27,7 +33,6 @@ Idea of use of "crypto-js.js" file came from the following:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple 'Enter the Private Key' and 'Generate Private Key' Wallet for FranklinCoin Blockchain</title>
     <link rel="stylesheet" type="text/css" href="wallet.css"/>
-    <script src="lib/ethers.min.js"></script>
     <script src="lib/jquery-3.1.1.min.js"></script>
     <script src="lib/jquery.qrcode.min.js"></script>
     <!-- <script src="lib/require.js"></script> -->
@@ -35,6 +40,7 @@ Idea of use of "crypto-js.js" file came from the following:
     <script src="lib/elliptic.min.js"></script>
     <script src="lib/crypto-js.js"></script>
     <script src="lib/CryptoUtilities.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="wallet.js"></script>
 </head>
 
@@ -91,7 +97,7 @@ Idea of use of "crypto-js.js" file came from the following:
 
     <section id="viewShowAccountBalance">
         <h1>View Account Balance</h1>
-        <span>Public Address (40 Hex lowercase digits): </span><input type="text" readonly="true" size="65" class="readOnlyInputText" id="textPublicAddressViewAccountBalance"><br>
+        <span>Public Address (40 Hex lowercase digits): </span><input type="text" readonly="true" size="40" class="readOnlyInputText" id="textPublicAddressViewAccountBalance"><br>
         <span>Blockchain Node (URL Format): </span><input type="text" size="80" id="textBlockChainNodeViewAccountBalance"><br><br>
         <input type="button" id="buttonViewAccountBalance" value="Display Balance"/><br>
 		<textarea id="textareaDisplayBalance" class="result" readonly="true"></textarea>
@@ -99,9 +105,11 @@ Idea of use of "crypto-js.js" file came from the following:
 
     <section id="viewSendTransaction">
         <h1>Send Transaction</h1>
-		Sender (Public Address - 40 Hex lowercase digits): <input type="text" size="65" class="readOnlyInputText" readonly="true" id="senderPublicAddress"><br>
-		Recipient (Public Address - 40 Hex lowercase digits): <input type="text" size="65" id="recipientPublicAddress"><br>
-		Value (Micro-coins - Positive Integer): <input type="text" size="13" id="valueAmountToSend"><br><br>
+		Sender (Public Address - 40 Hex lowercase digits): <input type="text" size="40" class="readOnlyInputText" readonly="true" id="senderPublicAddress"><br>
+		Recipient (Public Address - 40 Hex lowercase digits): <input type="text" size="40" id="recipientPublicAddress"><br>
+		Value (Micro-coins - Positive Integer): <input type="text" size="13" id="valueAmountToSend"><br>
+		Fee (Micro-coins - Positive Integer - Minimum is 10 Micro-coins): <input type="text" size="13" id="feeAmountToSend"><br>
+		Data: <br><textarea id="dataToSend" class="result"></textarea><br>
         <input type="button" id="buttonSignTransaction" value="Sign Transaction"/><br>
         <textarea id="textareaSignTransaction" class="result" readonly="true"></textarea><br>
         Blockchain Node (URL Format): <input type="text" size="80" id="blockchainNodeViewSendTransaction"><br><br>

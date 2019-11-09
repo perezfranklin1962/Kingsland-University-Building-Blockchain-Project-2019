@@ -1,8 +1,16 @@
 $(document).ready(function () {
-    // const derivationPath = "m/44'/60'/0'/0/";
-    // const provider = ethers.providers.getDefaultProvider('ropsten');
+	// As per Patrick Galloway:
+	// 1) If there is an error in communications, or if the peer takes longer than 60 seconds to respond, the peer should be dropped.
+	// 2) If I call a peer with ANY RESTFul Web Service and I get back an error or there's no response in 60 seconds, I will drop the peer.
+	//
+	// References:
+	// 1) Node/research/Patrick-Galloway_What-to-do-if-Peer-does=not-respond-or-errors-out.jpg file
+	// 2) https://medium.com/@masnun/handling-timeout-in-axios-479269d83c68
+	var restfulCallTimeout = 60000; // 60 seconds or 60000 milliseconds
 
-    // let wallets = {};
+	// The "axios" global variable is obtained from the "<head>" section of the "wallet.html" file that
+	// included the https://unpkg.com/axios/dist/axios.min.js file as explained in the comments of the
+	// "wallet.html" file.
 
     showView("viewHome");
 
@@ -18,14 +26,22 @@ $(document).ready(function () {
     });
 
     $('#linkOpenExistingWallet').click(function () {
-		// $('#textOpenExistingWallet').val(sessionStorage.wallet.privateKey);
 		console.log('Clicked on linkOpenExistingWallet');
 		console.log('   sessionStorage.privateKey =', sessionStorage.privateKey);
 		console.log('   sessionStorage.publicKey =', sessionStorage.publicKey);
 		console.log('   sessionStorage.publicAddress =', sessionStorage.publicAddress);
 
 		$('#textOpenExistingWallet').val(sessionStorage.privateKey);
-        $('#textareaOpenWalletResult').val('');
+
+		let displayWalletInfo = '';
+		if (sessionStorage.privateKey) {
+			displayWalletInfo = "Existing private key: " + sessionStorage.privateKey + "\n" +
+				"Extracted public key: " + sessionStorage.publicKey + "\n" +
+				"Extracted public adress: " + sessionStorage.publicAddress;
+		}
+
+        $('#textareaOpenWalletResult').val(displayWalletInfo);
+
         showView("viewOpenExistingWallet");
     });
 
@@ -46,6 +62,8 @@ $(document).ready(function () {
 
         $('#recipientPublicAddress').val('');
         $('#valueAmountToSend').val('');
+        $('#feeAmountToSend').val('10');
+        $('#dataToSend').val('');
 
         $('#textareaSignedTransactionResult').val('');
         $('#textareaSendTransactionResult').val('');
@@ -92,6 +110,10 @@ $(document).ready(function () {
         })
     }
 
+    function hideInfo() {
+		$('#infoBox').hide();
+	}
+
     function showError(errorMsg) {
         $('#errorBox>p').html('Error: ' + errorMsg);
         $('#errorBox').show();
@@ -112,34 +134,6 @@ $(document).ready(function () {
         $('#loadingBox').hide();
     }
 
-    function showLoggedInButtons() {
-        $('#linkCreateNewWallet').hide();
-        $('#linkOpenExistingWallet').hide();
-        $('#linkImportWalletFromFile').hide();
-
-        $('#linkShowMnemonic').show();
-        $('#linkShowAccountBalance').show();
-        $('#linkSendTransaction').show();
-        $('#linkExportJsonToFile').show();
-        $('#linkDelete').show();
-    }
-
-    function encryptAndSaveJSON(wallet, password) {
-        // TODO:
-        // return wallet.encrypt(password, {}, showLoadingProgress)
-        //	.then(json => {
-		//		localStorage.setItem('JSON', json);
-		//		showLoggedInButtons();
-		//	})
-		//	.catch(showError)
-		//	.finally(hideLoadingBar)
-    }
-
-    function decryptWallet(json, password) {
-        // TODO:
-        // return ethers.Wallet.fromEncryptedWallet(json, password, showLoadingProgress);
-    }
-
     function generateNewWallet() {
 		let privateKey = generateRandomPrivateKey();
 		let publicKey = getPublicKeyFromPrivateKey(privateKey);
@@ -154,6 +148,9 @@ $(document).ready(function () {
 				"Extracted public adress: " + publicAddress;
 
 		$('#textareaCreateWalletResult').val(displayWalletInfo);
+
+		// Below done so that other appropriate hyperlinks in header show up.
+		showView("viewCreateNewWallet");
     }
 
     function openWallet() {
@@ -175,61 +172,76 @@ $(document).ready(function () {
 				"Extracted public adress: " + publicAddress;
 
 		$('#textareaOpenWalletResult').val(displayWalletInfo);
+
+		// Below done so that other appropriate hyperlinks in header show up.
+		showView("viewOpenExistingWallet");
     }
 
-    function saveJsonLocalStorageToFile() {
-		let blob = new Blob([localStorage.JSON], {type: "text/plain"});
-		let fileName = $('#textJsonFileName').val();
-
-		saveAs(blob, fileName);
-	}
-
-    function openWalletFromFile() {
-        // TODO:
-        if ($('#walletForUpload')[0].files.length === 0) {
-			return showError("Please select a file to upload.");
+    async function showAccountBalance() {
+		// Validate the Chain Node URL entered.
+		let nodeIdUrl = $('#textBlockChainNodeViewAccountBalance').val().trim();
+		if (nodeIdUrl.length === 0) {
+			showError('The Blockchain Node cannot be an empty string or consist only of white space. Please enter a ' +
+				'Blockchain Node value that has an URL format such as http://localhost:5555 or ' +
+				'https:/stormy-everglades-34766.herokuapp.com:5555');
+			return;
+		}
+		if (!isValidURL(nodeIdUrl)) {
+			showError('The entered Blockchain Node is not an URL formatted string. Please enter a ' +
+				'Blockchain Node value that has an URL format such as http://localhost:5555 or ' +
+				'https:/stormy-everglades-34766.herokuapp.com:5555');
+			return;
 		}
 
-		let password = $('#passwordUploadWallet').val();
+		let publicAddress =  $('#textPublicAddressViewAccountBalance').val();
+		let restfulUrl = nodeIdUrl + "/address/" + publicAddress + "/balance";
+		let restfulSuccessfulResponse = undefined;
+		let restfulErrorResponse = undefined;
 
-		let fileReader = new FileReader();
-		fileReader.onload = function () {
-			let json = fileReader.result;
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
 
-			decryptWallet(json, password)
-				.then(wallet => {
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+				restfulSuccessfulResponse = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+				restfulErrorResponse = error;
+  		});
 
-					// Check that the JSON is generated from a mnemonic and not from a single private key
-					if (!wallet.mnemonic) {
-						return showError("Invalid JSON file!");
-					}
+  		hideInfo();
 
-					localStorage.setItem('JSON', json);
-					showInfo("Wallet successfully loaded!");
-					showLoggedInButtons();
-				})
-				.catch(showError) // It shows "Error: Error: invalid password" when using the "no-mnemonic-wallet" file!
-				.finally(hideLoadingBar)
-		};
+  		let errorMessage = undefined;
+  		let displayBalanceInfo = undefined;
 
-		fileReader.readAsText($('#walletForUpload')[0].files[0]);
-    }
+		// If the RESTFul call to Blockchain Node yielded no response after the timeout, then just display an error message.
+		if (restfulSuccessfulResponse === undefined && restfulErrorResponse === undefined) {
+			errorMessage = `Attempt to call ${restfulUrl } to obtain account balance failed due to timeout - unable to ` +
+				`get account balance.`
+			showError(errorMessage);
+		}
+		else if (restfulErrorResponse !== undefined) {
+			errorMessage = `Attempt to call ${restfulUrl } to obtain account balance failed due to error message - unable to ` +
+				`get account balance. See details of error in text area under the 'Display Balance' button.`;
+			showError(errorMessage);
 
-    function showMnemonic() {
-        // TODO:
-        let password = $('#passwordShowMnemonic').val();
-        let json = localStorage.JSON;
-
-        decryptWallet(json, password)
-        	.then(wallet => {
-				showInfo("Your mnemonic is: " + wallet.mnemonic);
-		})
-		.catch(showError)
-		.finally(hideLoadingBar)
-    }
-
-    function showAccountBalance() {
-
+			// Technique to prettify obtained from the https://coderwall.com/p/buwfjw/pretty-print-json-with-native-javascript
+			// web page.
+			displayBalanceInfo = JSON.stringify(restfulErrorResponse, undefined, 2);
+			$('#textareaDisplayBalance').val(displayBalanceInfo);
+		}
+		else { // restfulSuccessfulResponse !== undefined
+			let displayBalanceInfo = "Balance (6 confirmations or more): " + restfulSuccessfulResponse.safeBalance + "\n" +
+					"Balance (1 confirmation or more): " + restfulSuccessfulResponse.confirmedBalance + "\n" +
+					"Balance (pending - 0 or more confirmations): " + restfulSuccessfulResponse.pendingBalance;
+			$('#textareaDisplayBalance').val(displayBalanceInfo);
+		}
     }
 
     function unlockWalletAndDeriveAddresses() {
@@ -317,7 +329,6 @@ $(document).ready(function () {
     }
 
     function deleteWallet() {
-        // TODO:
         sessionStorage.clear();
         showView('viewHome');
     }
