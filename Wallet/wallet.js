@@ -49,7 +49,7 @@ $(document).ready(function () {
 		console.log('linkShowAccountBalance clicked');
 
 		$('#textPublicAddressViewAccountBalance').val(sessionStorage.publicAddress);
-		$('#textBlockChainNodeViewAccountBalance').val('');
+		// $('#textBlockChainNodeViewAccountBalance').val('');
 		$('#textareaDisplayBalance').val('');
 
         showView("viewShowAccountBalance");
@@ -64,8 +64,9 @@ $(document).ready(function () {
         $('#valueAmountToSend').val('');
         $('#feeAmountToSend').val('10');
         $('#dataToSend').val('');
+        // $('#blockchainNodeViewSendTransaction').val('');
 
-        $('#textareaSignedTransactionResult').val('');
+        $('#textareaSignTransaction').val('');
         $('#textareaSendTransactionResult').val('');
 
         showView("viewSendTransaction");
@@ -76,6 +77,8 @@ $(document).ready(function () {
     $('#buttonViewAccountBalance').click(showAccountBalance);
     $('#buttonSignTransaction').click(signTransaction);
     $('#buttonSendSignedTransaction').click(sendSignedTransaction);
+
+    $('#buttonClearFieldsInOpenExistingWallet').click(clearFieldsInOpenExistingWallet);
 
     $('#linkDelete').click(deleteWallet);
 
@@ -182,6 +185,11 @@ $(document).ready(function () {
 		// Below done so that other appropriate hyperlinks in header show up.
 		showView("viewOpenExistingWallet");
     }
+
+    function clearFieldsInOpenExistingWallet() {
+		$('#textOpenExistingWallet').val('');
+        $('#textareaOpenWalletResult').val('');
+	}
 
     async function showAccountBalance() {
 		// Validate the Chain Node URL entered.
