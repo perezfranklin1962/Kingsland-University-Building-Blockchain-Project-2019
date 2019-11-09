@@ -29,7 +29,7 @@ const ec = new elliptic.ec('secp256k1');
 // Reference --> https://devstore.io/js/crypto-js
 // var CryptoJS = require('crypto-js');
 
-// Use of "require" from above did not work inside the brwoser.
+// Use of "require" from above did not work inside the browser.
 // The "CryptoJS" is created automatically by using the "bower" created "crypto-js.js" file and including
 // the reference to the "crypto-js.js" file inside of the "wallet.html" file under the "<head>" section.
 //

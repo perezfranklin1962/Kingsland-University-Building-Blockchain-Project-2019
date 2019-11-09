@@ -1,8 +1,23 @@
 // Need below to do SHA-256 Hash
 // Reference --> https://cryptojs.gitbook.io/docs
-var CryptoJS = require('crypto-js');
+// var CryptoJS = require('crypto-js');
 
-module.exports = class Transaction {
+// Use of "require" from above did not work inside the browser.
+// The "CryptoJS" is created automatically by using the "bower" created "crypto-js.js" file and including
+// the reference to the "crypto-js.js" file inside of the "wallet.html" file under the "<head>" section.
+//
+// Procedure to create "crypto-js.js" file:
+// 1) Install "bower" by executing following inside of Ubuntu 18.04 LTS: npm install -g bower
+// 2) Created /mnt/d/Bower directory and went to the /mnt/d/Bower directory: bower install crypto-js
+// 3) Step #2 creates following file: /mnt/d/Bower/bower_components/crypto-js/crypto-js.js
+// 4) Copied /mnt/d/Bower/bower_components/crypto-js/crypto-js.js into the "lib" directory
+//
+// References for "bower" created "crypto-js.js" file:
+// 1) https://devstore.io/js/crypto-js
+// 2) https://github.com/brix/crypto-js
+// 3) https://bower.io
+
+class Transaction {
 
 	constructor(
 		from, // address (40 hex digits) string

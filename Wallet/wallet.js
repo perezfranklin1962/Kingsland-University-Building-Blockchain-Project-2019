@@ -154,9 +154,15 @@ $(document).ready(function () {
     }
 
     function openWallet() {
-        let privateKey = $('#textOpenExistingWallet').val();
+        let privateKey = $('#textOpenExistingWallet').val().trim().toLowerCase();
+        if (privateKey.length === 0) {
+			showError("The Private Key cannot be an empty string or consist only of white space. Please enter a " +
+				"Private Key value that is a 64-hex valued lower case string.");
+			return;
+		}
 		if (!isValidPrivateKey(privateKey)) {
-			showError("Entered private key is not a 64-hex valued lower case string");
+			showError("Entered Private Key is not a 64-hex valued lower case string. " +
+				"Please enter a Private Key that is a 64-hex valued lower case string.");
 			return;
 		}
 
@@ -244,88 +250,126 @@ $(document).ready(function () {
 		}
     }
 
-    function unlockWalletAndDeriveAddresses() {
-        // TODO:
-        let password = $('#passwordSendTransaction').val();
-        let json = localStorage.JSON;
-
-        decryptWallet(json, password)
-        	.then(wallet => {
-				showInfo("Wallet successfully unlocked!");
-				renderAddresses(wallet);
-				$('#divSignAndSendTransaction').show();
-			})
-			.catch(showError)
-			.finally(()=> {
-				$('#passwordSendTransaction').val('');
-				hideLoadingBar();
-			});
-
-		function renderAddresses(wallet) {
-			$('#senderAddress').empty();
-
-			// let masterNode = ethers.HDNode.fromMnemonic(wallet.mnemonic);
-			for (let i = 0; i < 5; i++) {
-				// let wallet = new ethers.Wallet(masterNode.derivePath(derivationPath + i).privateKey, provider);
-				// let address = wallet.address;
-
-				// wallets[address] = wallet;
-				// let option = $(`<option id=${wallet.address}>`).text(address);
-				// $('#senderAddress').append(option);
-			}
-		}
-    }
-
     function signTransaction() {
-        // TODO:
-        let senderAddress = $('#senderAddress option:selected').attr('id');
+		console.log('signTransaction function entered');
 
-        // let wallet = wallets[senderAddress];
-        // if (!wallet) {
-		//	return showError("Invalid address!");
-		// }
+		// No need to check validity for a read-only text field.
+ 		let senderPublicAddress = $('#senderPublicAddress').val().trim().toLowerCase();
 
-		let recipient = $('#recipientAddress').val();
-		if (!recipient) {
-			return showError("Invalid recipient!");
+		// Check for validity of Recipient Public Address.
+		let recipientPublicAddress = $('#recipientPublicAddress').val().trim().toLowerCase();
+		if (recipientPublicAddress.length === 0) {
+			showError('The Recipient Public Address cannot be an empty string or consist only of white space. Please enter a ' +
+				'Recipient Public Address value that is a 40-hex lowercase string.');
+			return;
+		}
+		if (!isValidPublicAddress(recipientPublicAddress)) {
+			showError("Entered Recipient Public Address is not a 40-hex valued lower case string. " +
+				"Please enter a Recipient Public Address that is a 40-hex valued lower case string.");
+			return;
 		}
 
-		let value = $('#transferValue').val();
-		if (!value) {
-			return showError("Invalid transfer value!");
+		// Check for validity of the Value to Send.
+		let amountToSendValue = $('#valueAmountToSend').val().trim();
+		if (amountToSendValue.length === 0) {
+			showError('Value to send cannot be an empty string or consist only of white space. Please enter a ' +
+				'Value to send that is a positive integer.');
+			return;
+		}
+		if (!isNumeric(amountToSendValue)) {
+			showError("Entered Value to send is not a positive integer. " +
+					"Please enter a Value to send that is positive integer.");
+			return;
+		}
+		amountToSendValue = parseInt(amountToSendValue);
+
+		// Check for validity of the Fee.
+		let feeAmount = $('#feeAmountToSend').val().trim();
+		if (feeAmount.length === 0) {
+			showError('Fee cannot be an empty string or consist only of white space. Please enter a ' +
+					  'Fee that is a positive integer greater than or equal to 10.');
+			return;
+		}
+		if (!isNumeric(feeAmount)) {
+			showError("Entered Fee is not a positive integer. " +
+				"Please enter a Fee that is positive integer greater than or equal to 10.");
+			return;
 		}
 
-		// wallet.getTransactionCount()
-		//	.then(signTransaction)
-		//	.catch(showError);
-
-		function signTransaction(nonce) {
-			let transaction = {
-				nonce,
-				gasLimit: 21000,
-				gasPrice: 12, // ethers.utils.bigNumberify("20000000000"),
-				to: recipient,
-				value: 12, // ethers.utils.parseEther(value.toString()),
-				data: "0x",
-				chainId: 12 // provider.chainId
-			};
-
-			// let signedTransaction = wallet.sign(transaction);
-			// $('#textareaSignedTransaction').val(signedTransaction);
+		// Check that Fee is greater than or equal to 10.
+		feeAmount = parseInt(feeAmount);
+		if (feeAmount < 10) {
+			showError("Entered Fee is not a positive integer greater than or equal to 10. " +
+				"Please enter a Fee that is positive integer greater than or equal to 10.");
+			return;
 		}
+
+		let dataToSend = $('#dataToSend').val().trim();
+
+		console.log('signTransaction function passed all input tests');
+
+		// Transaction constructor below automatically calculates the Transaction Data Hash based on the
+		// input parameters to the constructor.
+		let dateCreated = new Date().toISOString();
+		let senderPubKey = sessionStorage.publicKey;
+		let transactionToSign = new Transaction(
+				senderPublicAddress, // address (40 hex digits) string
+				recipientPublicAddress, // address (40 hex digits) string
+				amountToSendValue, // integer (non negative)
+				feeAmount, // integer (non negative)
+				dateCreated, // ISO8601_string
+				dataToSend, // string (optional)
+				senderPubKey); // hex_number[65] string
+
+		// Sign the Transaction to Send and get it's signature.
+		//
+		// Output: A Signature JavaScript object that has the following two main attributes:
+		// 1) r : 64-Hex string of the Signature "r" attribute
+		// 2) s : 64-Hex string of the Signature "s" attribute
+		let signature = createSignature(transactionToSign.transactionDataHash, sessionStorage.privateKey);
+		let senderSignatureArray = [ signature.r, signature.s ];
+
+		let transactionToSend = {
+				from: transactionToSign.from,
+				to: transactionToSign.to,
+				value: transactionToSign.value,
+				fee: transactionToSign.fee,
+				dateCreated: transactionToSign.dateCreated,
+				data: transactionToSign.data,
+				senderPubKey: transactionToSign.senderPubKey,
+				senderSignature: senderSignatureArray
+		}
+
+		let displaySignedTransaction = JSON.stringify(transactionToSend, undefined, 2);
+		$('#textareaSignTransaction').val(displaySignedTransaction);
     }
 
     function sendSignedTransaction() {
-        // TODO:
-        let signedTransaction = $('#textareaSignedTransaction').val();
-        // provider.sendTransaction(signedTransaction)
-        //	.then(hash => {
-		//		showInfo("Transaction hash: " + hash);
-        //
-		//		let etherscanUrl = 'https://ropsten.etherscan.io/tx/' + hash;
-		//		$('#textareaSendTransactionResult').val(etherscanUrl);
-		//	})
-		//	.catch(showError);
+		console.log('sendSignedTransaction function entered');
+
+		// Validate the Chain Node URL entered.
+		let nodeIdUrl = $('#blockchainNodeViewSendTransaction').val().trim();
+		if (nodeIdUrl.length === 0) {
+			showError('The Blockchain Node cannot be an empty string or consist only of white space. Please enter a ' +
+				'Blockchain Node value that has an URL format such as http://localhost:5555 or ' +
+				'https:/stormy-everglades-34766.herokuapp.com:5555');
+			return;
+		}
+		if (!isValidURL(nodeIdUrl)) {
+			showError('The entered Blockchain Node is not an URL formatted string. Please enter a ' +
+				'Blockchain Node value that has an URL format such as http://localhost:5555 or ' +
+				'https:/stormy-everglades-34766.herokuapp.com:5555');
+			return;
+		}
+
+        let signedTransactionJsonString = $('#textareaSignTransaction').val();
+        if (signedTransactionJsonString.length === 0) {
+			showError("No Transaction has been signed to be sent. Please create and sign a Transaction " +
+				"before trying to send a Transaction.");
+			return;
+		}
+
+		console.log('sendSignedTransaction function passed all input tests');
     }
 
     function deleteWallet() {

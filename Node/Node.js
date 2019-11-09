@@ -698,7 +698,7 @@ module.exports = class Node {
 		// Validate the "senderPubKey": Make sure that the Public Address obtained from the "senderPubKey" matches the "to" Address.
 		let calculatedSenderPublicAddress = CryptoUtilities.getPublicAddressFromPublicKey(jsonInput.senderPubKey);
 		if (jsonInput.from !== calculatedSenderPublicAddress) {
-			return { errorMsg: "Invalid transaction: field 'senderPubKey' does not match the 'from' public address when derving the public address from the public key" };
+			return { errorMsg: "Invalid transaction: field 'senderPubKey' does not match the 'from' public address when deriving the public address from the public key" };
 		}
 
 		let newTransaction = new Transaction(
