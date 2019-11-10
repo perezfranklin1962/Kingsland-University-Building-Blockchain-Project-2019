@@ -147,15 +147,23 @@ async function infiniteMining() {
 		// Check the Response from the GET /mining/get-mining-job/${minerPublicAddress} RESTFul Call.
 		if (getMiningJobSuccessfulResponse === undefined && getMiningJobErrorResponse === undefined) {
 			console.log(`Node ${nodeUrl} did not respond after timeout period from GET RESTFul call to ${getMiningJobRestfulUrl}`);
-			console.log('   Stopping the Miner....');
-			break;
+
+			// console.log('   Stopping the Miner....');
+			// break;
+
+			console.log(`   Trying again to reach Node ${nodeUrl} ....`);
+			continue;
 		}
 		else if (getMiningJobErrorResponse !== undefined) {
 			console.log(`Error shown below occurred when GET RESTFul call to ${getMiningJobRestfulUrl} made:`);
 			console.log(getMiningJobErrorResponse);
 			console.log();
-			console.log('Stopping the Miner....');
-			break;
+
+			// console.log('Stopping the Miner....');
+			// break;
+
+			console.log(`   Trying again to reach Node ${nodeUrl} ....`);
+			continue;
 		}
 
 		// At this point, we know that "getMiningJobSuccessfulResponse" is defined
@@ -175,7 +183,8 @@ async function infiniteMining() {
 		};
 
 		let leadingZeros = ''.padStart(blockToBeMined.difficulty, '0');
-		let timeToFindNonce = 60000; // time in milliseconds
+		// let timeToFindNonce = 60000; // time in milliseconds
+		let timeToFindNonce = 120000; // time in milliseconds
 		let startTimeForNonce = new Date().getTime();
 		while (true) {
 			// blockToBeMined.dateCreated = new Date().toISOString();

@@ -105,7 +105,7 @@ Idea of use of "axios.js" file inside of browser came form the following:
     <section id="viewShowAccountBalance">
         <h1>View Account Balance</h1>
         <span>Public Address (40 Hex lowercase digits): </span><input type="text" readonly="true" size="40" class="readOnlyInputText" id="textPublicAddressViewAccountBalance"><br>
-        <span>Blockchain Node (URL Format): </span><input type="text" size="80" id="textBlockChainNodeViewAccountBalance"><br><br>
+        <span>Blockchain Node (URL Format): </span><input type="text" size="80" autocomplete="off" id="textBlockChainNodeViewAccountBalance"><br><br>
         <input type="button" id="buttonViewAccountBalance" value="Display Balance"/><br>
 		<textarea id="textareaDisplayBalance" class="result" readonly="true"></textarea>
     </section>
@@ -115,12 +115,15 @@ Idea of use of "axios.js" file inside of browser came form the following:
 		Sender (Public Address - 40 Hex lowercase digits): <input type="text" size="40" class="readOnlyInputText" readonly="true" id="senderPublicAddress"><br>
 		Recipient (Public Address - 40 Hex lowercase digits): <input type="text" size="40" id="recipientPublicAddress"><br>
 		Value (Micro-coins - Positive Integer): <input type="text" size="13" id="valueAmountToSend"><br>
-		Fee (Micro-coins - Positive Integer - Minimum is 10 Micro-coins): <input type="text" size="13" id="feeAmountToSend"><br>
+		Fee (Micro-coins - Positive Integer - Minimum is 10 Micro-coins): <input type="text" size="13" id="feeAmountToSend">
+		<input type="button" id="buttonClearSendTransactionData" value="Clear Send Transaction Data"/><br>
 		Data: <br><textarea id="dataToSend" class="result"></textarea><br>
-        <input type="button" id="buttonSignTransaction" value="Sign Transaction"/><br>
+        <input type="button" id="buttonSignTransaction" value="Sign Transaction"/>
+        <input type="button" id="buttonClearSignTransactionDisplay" value="Clear Sign Transaction Display"/><br>
         <textarea id="textareaSignTransaction" class="result" readonly="true"></textarea><br>
-        Blockchain Node (URL Format): <input type="text" size="80" id="blockchainNodeViewSendTransaction"><br><br>
-        <input type="button" id="buttonSendSignedTransaction" value="Send Transaction"/><br>
+        Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" id="blockchainNodeViewSendTransaction"><br><br>
+        <input type="button" id="buttonSendSignedTransaction" value="Send Transaction"/>
+        <input type="button" id="buttonClearSendSignedTransactionDisplay" value="Clear Send Transaction Display"/><br>
         <textarea id="textareaSendTransactionResult" class="result" readonly="true"></textarea>
     </section>
 </main>

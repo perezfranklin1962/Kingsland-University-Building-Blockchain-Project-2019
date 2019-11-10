@@ -79,6 +79,9 @@ $(document).ready(function () {
     $('#buttonSendSignedTransaction').click(sendSignedTransaction);
 
     $('#buttonClearFieldsInOpenExistingWallet').click(clearFieldsInOpenExistingWallet);
+    $('#buttonClearSendTransactionData').click(clearSendTransactionData);
+    $('#buttonClearSignTransactionDisplay').click(clearSignTransactionDisplay);
+    $('#buttonClearSendSignedTransactionDisplay').click(clearSendSignedTransactionDisplay);
 
     $('#linkDelete').click(deleteWallet);
 
@@ -268,6 +271,13 @@ $(document).ready(function () {
 		}
     }
 
+    function clearSendTransactionData() {
+		$('#recipientPublicAddress').val('');
+		$('#valueAmountToSend').val('');
+		$('#feeAmountToSend').val('10');
+		$('#dataToSend').val('')
+	}
+
     function signTransaction() {
 		console.log('signTransaction function entered');
 
@@ -314,13 +324,14 @@ $(document).ready(function () {
 			return;
 		}
 
-		// Check that Fee is greater than or equal to 10.
 		feeAmount = parseInt(feeAmount);
+		/*
 		if (feeAmount < 10) {
 			showError("Entered Fee is not a positive integer greater than or equal to 10. " +
 				"Please enter a Fee that is positive integer greater than or equal to 10.");
 			return;
 		}
+		*/
 
 		let dataToSend = $('#dataToSend').val().trim();
 
@@ -361,6 +372,10 @@ $(document).ready(function () {
 		let displaySignedTransaction = JSON.stringify(transactionToSend, undefined, 2);
 		$('#textareaSignTransaction').val(displaySignedTransaction);
     }
+
+    function clearSignTransactionDisplay() {
+		$('#textareaSignTransaction').val('');
+	}
 
     async function sendSignedTransaction() {
 		console.log('sendSignedTransaction function entered');
@@ -470,6 +485,10 @@ $(document).ready(function () {
 			$('#textareaSendTransactionResult').val(displaySendTransactionInfo);
 		}
     }
+
+    function clearSendSignedTransactionDisplay() {
+		$('#textareaSendTransactionResult').val('');
+	}
 
     function deleteWallet() {
         sessionStorage.clear();

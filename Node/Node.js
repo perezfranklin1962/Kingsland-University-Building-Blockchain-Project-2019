@@ -491,10 +491,14 @@ module.exports = class Node {
 			console.log('this.chain.blocks.length =', this.chain.blocks.length);
 			*/
 
+			console.log('******* transactionsForAddress.length =', transactionsForAddress.length);
+
 			for (let i = 0; i < transactionsForAddress.length; i++) {
 				let transaction = transactionsForAddress[i];
 
 				let deltaBalanceValue = 0;
+				// Below "deltaBalanceValue" is dependent on many factors. Thus, we need to move it elsewhere and comment out below.
+				/*
 				if (transaction.to === publicAddress) {
 					deltaBalanceValue += transaction.value;
 				}
@@ -502,11 +506,19 @@ module.exports = class Node {
 					deltaBalanceValue -= transaction.fee;
 					deltaBalanceValue -= transaction.value;
 				}
+				*/
 
 				// console.log('deltaBalanceValue =', deltaBalanceValue);
 
 				// If this is a Pending Transaction, then...
 				if (transaction.minedInBlockIndex === null) {
+					if (transaction.to === publicAddress) {
+						deltaBalanceValue += transaction.value;
+					}
+					else if (transaction.from === publicAddress) {
+						deltaBalanceValue -= transaction.fee;
+						deltaBalanceValue -= transaction.value;
+					}
 
 					// pendingBalance - expected balance (0 confirmations)
 					// It is assumed that all pending transactions will be successful
@@ -526,6 +538,14 @@ module.exports = class Node {
 					// console.log('numberOfConfirmations =', numberOfConfirmations);
 
 					if (transaction.transferSuccessful) {
+						if (transaction.to === publicAddress) {
+							deltaBalanceValue += transaction.value;
+						}
+						else if (transaction.from === publicAddress) {
+							deltaBalanceValue -= transaction.fee;
+							deltaBalanceValue -= transaction.value;
+						}
+
 						confirmedBalanceValue += deltaBalanceValue;
 
 						// pendingBalance - expected balance (0 confirmations)
@@ -540,7 +560,30 @@ module.exports = class Node {
 							safeBalanceValue += deltaBalanceValue;
 						}
 					}
+					else { // transaction.transferSuccessful === false
+
+						// If the Transaction was not successful, then only the "fee" is deducted from the "from" address.
+						if (transaction.from === publicAddress) {
+							deltaBalanceValue -= transaction.fee;
+						}
+
+						confirmedBalanceValue += deltaBalanceValue;
+
+						// pendingBalance - expected balance (0 confirmations)
+						// It is assumed that all pending transactions will be successful
+						// I interpret "expected Balance" to mean that we ALSO count in the Transactions that have
+						//    been confirmed, since the expected balance should include Transactions that have been
+						//    placed in the actual "this.chain.blocks" - and thus automatically have ONE confirmation - PLUS
+						//    the transactions that are Pending and are expected to become successful.
+						pendingBalanceValue += deltaBalanceValue;
+
+						if (numberOfConfirmations >= safeConfirmCount) {
+							safeBalanceValue += deltaBalanceValue;
+						}
+					}
+
 				} // end if (transaction.minedInBlockIndex === null)
+
 			} // end for loop
 
 			response = {
@@ -859,7 +902,7 @@ module.exports = class Node {
 			}
 			else { // "from" Public Address does not have enough to cover the Fee
 
-				// Not sure what the professor wants here, but if the Pending Transaction does not even have enough to cover BOTH the
+				// Not sure what the professor wants here, but if the Pending Transaction does not even have enough to cover the
 				// Transaction Fee, then it's probably best to just remove it from the Blockchain Pending Transaction List.
 				// Filter Technique Source --> https://alligator.io/js/filter-array-method
 				this.chain.pendingTransactions = this.chain.pendingTransactions.filter(aTransaction =>
@@ -1043,8 +1086,19 @@ module.exports = class Node {
 		// occupy? In other words, has a Block with the same Block Index as this "possibleNewBlockCandidate" already present in the
 		// Blockchain? Is there a Block that alreadt has the same Block Index? If so, then we cannot place this "possibleNewBlockCandidate"
 		// in the Blockchain.
+		// console.log('possibleNewBlockCandidate.index =', possibleNewBlockCandidate.index);
+		// console.log('   this.chain.blocks.length =', this.chain.blocks.length);
 		if (possibleNewBlockCandidate.index < this.chain.blocks.length) {
 			return { errorMsg: "Block with same Block Index already present in Blockchain" }
+		}
+
+		// Make sure that the "possibleNewBlockCandidate.index" is equal to "this.chain.blocks.length", because that's what the NEXT block index number
+		// should be.
+		if (possibleNewBlockCandidate.index != this.chain.blocks.length) {
+			return {
+				errorMsg: "Block index of mined job is incorrect, because it's greater than the curent number of blocks in the Blockchain. " +
+					"It should be equal to the next available Block Index number."
+			}
 		}
 
 		// Verify that the "possibleNewBlockCandidate.prevBlockHash" refers to the Block Hash of the last Block in the Blockchain. If not,
