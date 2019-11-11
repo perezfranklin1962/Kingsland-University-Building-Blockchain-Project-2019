@@ -7,7 +7,7 @@ var express = require('express');
 var app = express();
 
 // The "cors" Node.js module is needed so that RESTFul GET and POST calls to the Node Server can be done successfully
-// from any browser as exsplained in the https://flaviocopes.com/cors web page.
+// from any browser as explained in the https://flaviocopes.com/cors web page.
 //
 // Tried to use "npm install -g cors" to install globally. It successfully installed globally, but
 // when I ran "node Node/research/NodeIdTest.js", the Node program could not find the global location. What worked was

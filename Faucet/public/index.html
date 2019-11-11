@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faucet for FranklinCoin Blockchain</title>
+    <link rel="stylesheet" type="text/css" href="site.css"/>
+    <script src="lib/jquery-3.1.1.min.js"></script>
+    <script src="lib/GeneralUtilities.js"></script>
+    <script src="lib/crypto-js.js"></script>
+    <script src="lib/elliptic.min.js'></script>
+    <script src="lib/CryptoUtilities.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="faucet-client.js"></script>
+</head>
+
+<body>
+
+<header id="menu">
+    <a href="#" id="linkHome">Home</a>
+    <a href="#" id="linkFaucet">Faucet</a>
+</header>
+
+<main>
+    <section id="ajaxLoadingBox">Loading ...</section>
+
+    <section id="progressBox">...</section>
+
+    <section id="infoBox"><header>x</header><p>Info</p></section>
+
+    <section id="errorBox"><header>x</header><p>Error</p></section>
+
+    <section id="viewHome">
+        <h1>Faucet for FranklinCoin Blockchain</h1>
+        Welcome to the Faucet using <b>FranklinCoin Blockchain</b>. The FranklinCoin Blockhain is a Blockchain created by Franklin Perez as part of the <b>Kingsland University Building Blockchain Project 2019</b> assignment.
+        <ul>
+            <li>This faucet sends up to 1 coin (i.e., 1,000,000 micro-coins) or less to anyone who requests coins.</li>
+            <li>The maxumum number of coins that you may request within any one-hour period is 1 coin (i.e., 1,000,000 micro-coins) or less.</li>
+            <li>Limits: one request per public address per hour.</li>
+            <li>Please go to the <b>Faucet</b> tab and enter the following to get your coins:
+                <ul>
+                    <li>Your Public Address (40-Hex lowercase digits)</li>
+                    <li>Amount of Micro-coins you would like to receive (maximum is 1,000,000 micro-coins)</li>
+                    <li>Fee (in micro-coins) deducted from your amount to be given to the Miners - Minimium is 10 micro-coins.</li>
+                    <li>Blockchain Node (URL Format) you would like to connet.</li>
+                </ul>
+            </li>
+        </ul>
+    </section>
+
+    <section id="viewFaucet">
+        <h1>Faucet</h1>
+		Recipient (Public Address - 40 Hex lowercase digits): <input type="text" size="40" autocomplete="off" id="recipientPublicAddress"><br>
+		Value (Micro-coins - Positive Integer - Maximum is 1,000,000 micro-coins): <input type="text" size="13" autocomplete="off" id="valueAmountToSend"><br>
+		Fee (Micro-coins - Positive Integer - Will be deducted from Value - Minimum is 10 micro-coins): <input type="text" size="13" autocomplete="off" id="feeAmountToSend"><br>
+		Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" autocomplete="off" id="blockchainNodeFaucet"><br><br>
+		<input type="button" id="buttonClearFaucet" value="Clear"/><br><br><br>
+		<input type="button" id="buttonGetYourCoins" value="Get your coins!"/><br><br>
+		Results:
+        <textarea id="textareaSendTransactionResult" class="result" readonly="true"></textarea>
+    </section>
+
+</main>
+
+<footer>Faucet for FranklinCoin Blockchain</footer>
+
+</body>
+</html>

@@ -491,7 +491,7 @@ module.exports = class Node {
 			console.log('this.chain.blocks.length =', this.chain.blocks.length);
 			*/
 
-			console.log('******* transactionsForAddress.length =', transactionsForAddress.length);
+			// console.log('******* transactionsForAddress.length =', transactionsForAddress.length);
 
 			for (let i = 0; i < transactionsForAddress.length; i++) {
 				let transaction = transactionsForAddress[i];

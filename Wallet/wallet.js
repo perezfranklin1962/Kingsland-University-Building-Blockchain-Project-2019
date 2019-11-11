@@ -367,7 +367,7 @@ $(document).ready(function () {
 				data: transactionToSign.data,
 				senderPubKey: transactionToSign.senderPubKey,
 				senderSignature: senderSignatureArray
-		}
+		};
 
 		let displaySignedTransaction = JSON.stringify(transactionToSend, undefined, 2);
 		$('#textareaSignTransaction').val(displaySignedTransaction);
