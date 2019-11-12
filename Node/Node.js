@@ -465,7 +465,7 @@ module.exports = class Node {
 		});
 		*/
 
-		let response = null;
+		let response = { errorMsg: 'Some unknown error occurred' };
 
 		if (typeof publicAddress === 'string') {
 			publicAddress = publicAddress.trim();
@@ -1251,6 +1251,8 @@ module.exports = class Node {
 	// 7) Node/research/Validating-a-Chain_2.jpg file
 	// 8) Node/research/Deleting-Lost-Peers.jpg file
 	async connectToPeer(jsonInput) {
+		// console.log('async connectToPeer: just entered function');
+
 		// Verify that the correct inputs are present.
 		if (!jsonInput.hasOwnProperty("peerUrl")) {
 			return {
@@ -1387,6 +1389,7 @@ module.exports = class Node {
 		let postJsonInput = { peerUrl: this.selfUrl };
 		let peersConnectResponse = undefined;
 		let peersConnectError = undefined;
+		// console.log(`async connectToPeer: About to execute axios POST ${restfulUrl}`);
 		await axios.post(restfulUrl, postJsonInput, {timeout: restfulCallTimeout})
 			.then(function (response) {
 				// console.log('response = ', response);
@@ -1402,9 +1405,11 @@ module.exports = class Node {
 				// console.log('error =', error);
 				peersConnectError = error;
   		});
+  		// console.log(`async connectToPeer: Just executed axios POST ${restfulUrl}`);
 
-  		// console.log('peersConnectResponse = ', peersConnectResponse);
-		// console.log('peersConnectError =', peersConnectError);
+  		// console.log('async connectToPeer: peersConnectResponse = ', peersConnectResponse);
+		// console.log('async connectToPeer: peersConnectError =', peersConnectError);
+
 
 		// If the RESTFul call to the peer yielded no response after the timeout, then just delete the peer node from the list of "peers".
 		if (peersConnectResponse === undefined && peersConnectError === undefined) {
@@ -1419,15 +1424,21 @@ module.exports = class Node {
 
 		// Attempt to synchronize Blocks with the Peer chain. Do not wait for the below asynchronous function to finish execution of this
 		// synchronization, because it could take a LONG time.
+		// console.log('async connectToPeer: About to execute async synchronizeChainFromPeerInfo');
 		this.synchronizeChainFromPeerInfo(responseData);
+		// console.log('async connectToPeer: Just executed async synchronizeChainFromPeerInfo');
 
 		// Attempt to synchronize Pending Transactions with the Peer chain. Do not wait for the below asynchronous function to finish execution of this
 		// synchronization, because it could take a LONG time.
+		// console.log('async connectToPeer: About to execute async synchronizePendingTransactionFromPeer');
 		this.synchronizePendingTransactionFromPeer(responseData);
+		// console.log('async connectToPeer: Just executed async synchronizePendingTransactionFromPeer');
 
-		response = {
+		let response = {
 				message: `Connected to peer: ${jsonInput.peerUrl}`
 		}
+
+		// console.log('async function connectToPeer: response =', response);
 
 		return response;
 	}
@@ -1441,7 +1452,7 @@ module.exports = class Node {
     // Input: "peerInfo" information that was obtained by calling /info REST URL
     //        Checking of validity of the "peerInfo" attributes is responsibility of calling function.
 	async synchronizePendingTransactionFromPeer(peerInfo) {
-		console.log('Inside of synchronizePendingTransactionFromPeer!');
+		// console.log('Inside of synchronizePendingTransactionFromPeer!');
 
 		if (peerInfo.pendingTransactions === 0) {
 			return { message: "No pending transactions to sync with peer" };
