@@ -55,11 +55,13 @@ var axios = require('axios');
 var restfulCallTimeout = 60000; // 60 seconds or 60000 milliseconds
 
 // This responds with "Hello World" on the homepage
+/*
 app.get('/', function (req, res) {
    console.log("Got a GET request for the homepage");
 
    res.end(JSON.stringify({"message" : "Hello GET"}));
 });
+*/
 
 // General information
 // Endpoint for receiving general information about the node.

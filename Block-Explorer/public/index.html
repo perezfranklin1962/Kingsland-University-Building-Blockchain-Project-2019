@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Explorer for FranklinCoin Blockchain</title>
+    <link rel="stylesheet" type="text/css" href="site.css"/>
+    <script src="lib/jquery-3.1.1.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="lib/GeneralUtilities.js"></script>
+    <script src="block-explorer-client.js"></script>
+</head>
+
+<body>
+
+<header id="menu">
+    <a href="#" id="linkHome">Home</a>
+    <a href="#" id="linkViewGeneralInfo">General Info</a>
+    <a href="#" id="linkViewPeers">Peers</a>
+    <a href="#" id="linkViewBlocks">Blocks</a>
+</header>
+
+<main>
+    <section id="ajaxLoadingBox">Loading ...</section>
+
+    <section id="progressBox">...</section>
+
+    <section id="infoBox"><header>x</header><p>Info</p></section>
+
+    <section id="errorBox"><header>x</header><p>Error</p></section>
+
+    <section id="viewHome">
+        <h1>Block Explorer for FranklinCoin Blockchain</h1>
+        Welcome to the Block Explorer for the <b>FranklinCoin Blockchain</b>. The FranklinCoin Blockhain is a Blockchain created by Franklin Perez as part of the <b>Kingsland University Building Blockchain Project 2019</b> assignment.<br>
+        <br>
+        <b>Block Explorer Functionality (for a given Blockchain Node):</b>
+        <ul>
+            <li><b>View General Information</b>
+                <ul>
+                    <li>Current Difficulty</li>
+                    <li>Current Cumulative Difficulty</li>
+                    <li>Other Information</li>
+                </ul>
+            </li>
+            <li><b>View Peers</b>
+            <li><b>View Blocks</b>
+            	<ul>
+            		<li>View All Blocks (Maximum of 50 Blocks at a time)</li>
+            		<li>View Block by Block Index Number (Index starts at 0)
+            	</ul>
+            </li>
+            <li><b>View Transactions</b>
+            	<ul>
+            		<li>View All Pending Transactions (Maximum of 50 Transactions at a time)</li>
+            		<li>View All Confirmed Transactions (Maximum of 50 Transactions at a time)</li>
+            		<li>View a Specific Transaction (by Transaction Data Hash)</li>
+            		<li>View All Transactions - Pending and Confirmed - for a Public Address (Maximum of 50 Transactions at a time)</li>
+            	</ul>
+            </li>
+            <li><b>View Accounts and Balances</b>
+            	<ul>
+					<li>View All Account Balances (Maximum of 50 Account Balances at a time)</li>
+					<li>View Balance for a Public Address</li>
+					<li>View All Transactions - Pending and Confirmed - for a Public Address (Maximum of 50 Transactions at a time)</li>
+            	</ul>
+            </li>
+            </li>
+        </ul>
+    </section>
+
+    <section id="viewDummy">
+        <h1>View Current Blocks</h1>
+        Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" autocomplete="off" id="blockchainNodeFaucet"><br><br>
+		Recipient (Public Address - 40 Hex lowercase digits): <input type="text" size="40" autocomplete="off" id="recipientPublicAddress"><br>
+		Value (Micro-coins - Positive Integer - Maximum is 1,000,000 micro-coins): <input type="text" size="13" autocomplete="off" id="valueAmountToSend"><br>
+		Fee (Micro-coins - Positive Integer - Will be deducted from Value - Minimum is 10 micro-coins): <input type="text" size="13" autocomplete="off" id="feeAmountToSend"><br>
+
+		<input type="button" id="buttonClearFaucet" value="Clear"/><br><br><br>
+		<input type="button" id="buttonGetYourCoins" value="Get your coins!"/><br><br>
+		Results:
+        <textarea id="textareaSendTransactionResult" class="result" readonly="true"></textarea>
+    </section>
+
+    <section id="viewGeneralInfo">
+    	<h1>View Current General Information</h1>
+    	Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" id="blockchainNodeGeneralInfo"><br><br>
+    	<input type="button" id="buttonGetGeneralInfo" value="Get Current General Information"/>
+    	<input type="button" id="buttonClearGeneralInfoResults" value="Clear Results"/>
+    	<br><br>
+    	<b>Results:</b> <br><br>
+    	Current Difficulty: <input type="text" size="40" readonly="true" id="currentDifficultyGeneralInfoResults"><br>
+    	Current Cumulative Difficulty: <input type="text" size="40" readonly="true" id="cumulativeDifficultyGeneralInfoResults"><br>
+    	About: <input type="text" size="40" readonly="true" id="aboutGeneralInfoResults"><br>
+		Node ID: <input type="text" size="40" readonly="true" id="nodeIdGeneralInfoResults"><br>
+		Chain ID: <input type="text" size="80" readonly="true" id="chainIdGeneralInfoResults"><br>
+		Node URL: <input type="text" size="40" readonly="true" id="nodeUrlGeneralInfoResults"><br>
+		Number of Peers: <input type="text" size="40" readonly="true" id="numberOfPeersGeneralInfoResults"><br>
+		Number of Blocks: <input type="text" size="40" readonly="true" id="numberOfBlocksGeneralInfoResults"><br>
+		Number of Confirmed Transactions (1 or more confirmations): <input type="text" size="40" readonly="true" id="numberOfConfirmedTransactionsGeneralInfoResults"><br>
+		Number of Pending Transactions (0 confirmations): <input type="text" size="40" readonly="true" id="numberOfPendingTransactionsGeneralInfoResults"><br>
+    </section>
+
+	<!--
+		Source for table code techniques:
+		1) https://codebun.com/create-dynamic-table-using-jquery
+		2) https://www.w3schools.com/html/html_tables.asp
+	-->
+
+    <section id="viewPeers">
+	    <h1>View Peers</h1>
+	    Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" id="blockchainNodePeers"><br><br>
+    	<input type="button" id="buttonGetPeers" value="Get Current Peers"/>
+    	<input type="button" id="buttonClearPeersResults" value="Clear Results"/>
+    	<br><br>
+    	<b>Results:</b> <br><br>
+    	Number of Peers: <input type="text" size="40" readonly="true" id="numberOfPeersViewPeersResults"><br><br>
+    	<div id="peersViewTableResultsDiv"></div>
+    	<!--
+    	<table id="" style="width:100%">
+			<tr>
+		    	<th>Node ID</th>
+		    	<th>Node URL</th>
+  			</tr>
+  			<div id="viewPeersTableRowsResultsDiv">
+  			 	<tr>
+  					<td>Franklin Node ID</td>
+  					<td>Franklin URL</td>
+  				<tr>
+  			</div>
+    	</table>
+    	-->
+
+    </section>
+
+    <section id="viewBlocks">
+        <h1>View Blocks</h1>
+        Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" id="blockchainNodeBlocks"><br><br>
+    </section>
+
+</main>
+
+<footer>Block Explorer for FranklinCoin Blockchain</footer>
+
+</body>
+</html>
