@@ -29,6 +29,15 @@ var restfulCallTimeout = 60000; // 60 seconds or 60000 milliseconds
 var confictErrorType = "Conflict";
 var badRequestErrorType = "Bad Request";
 
+// References:
+// 1) https://stackoverflow.com/questions/18765869/accessing-http-status-code-constants
+// 2) https://github.com/prettymuchbryce/http-status-codes
+//
+// Tried to use "npm install -g http-status-codes" to install globally. It successfully installed globally, but
+// when I ran "node Node/research/NodeIdTest.js", the Node program could not find the global location. What worked was
+// the "npm install http-status-codes --save" command.
+var HttpStatus = require('http-status-codes');
+
 // Research code for finding out how to generate the Node Id may be found in the "research/NodeIdTest.js" file.
 // Identifier of the node (hash of Datetime + some random): Will interpret this as meaning to to be:
 //    HASH(Datetime + some random number)
@@ -1403,8 +1412,12 @@ module.exports = class Node {
 			})
 			.catch(function (error) {
 				// console.log('error =', error);
-				peersConnectError = error;
-  		});
+				if (error.response !== undefined) {
+					peersConnectError = error.response;
+				} else {
+					peersConnectError = error;
+				}
+  			});
   		// console.log(`async connectToPeer: Just executed axios POST ${restfulUrl}`);
 
   		// console.log('async connectToPeer: peersConnectResponse = ', peersConnectResponse);
@@ -1417,6 +1430,48 @@ module.exports = class Node {
 			return {
 				errorMsg: `Attempt to form bi-directional connection with ${jsonInput.peerUrl} peer failed due to timeout - removed ${jsonInput.peerUrl} as peer`,
 				errorType: badRequestErrorType
+			}
+		}
+		else if (peersConnectError !== undefined) {
+			// We need to take into account a situation where BOTH will be trying to connect to each other and one of them may already
+			// be connected to the other. This will cause an Error Message to be returned back with Status 409 (Conflict Error), which is normal
+			// in this situation.
+			//
+			// If it's ANOTHER type of error, then something is horribly wrong, and we should not try to connect back to the peer on the other side; we
+			// should in this case make sure to disconnect with the peer.
+			if (peersConnectError.status !== undefined) {
+				if (peersConnectError.status !== HttpStatus.CONFLICT) {
+					this.peers.delete(responseData.nodeId);
+					let anErrorMessage = `Attempt to form bi-directional connection with ${jsonInput.peerUrl} peer failed due to an error - ` +
+						`removed ${jsonInput.peerUrl} as peer. `
+					if (peersConnectError.errorMsg !== undefined) {
+						anErrorMessage += peersConnectError.errorMsg;
+					}
+					else {
+						anErrorMessage += 'Unknown error';
+					}
+
+					return {
+						errorMsg: anErrorMessage,
+						errorType: badRequestErrorType
+					}
+				}
+			}
+			else {
+				this.peers.delete(responseData.nodeId);
+				let anErrorMessage = `Attempt to form bi-directional connection with ${jsonInput.peerUrl} peer failed due to an error - ` +
+						`removed ${jsonInput.peerUrl} as peer. `
+				if (peersConnectError.errorMsg !== undefined) {
+					anErrorMessage += peersConnectError.errorMsg;
+				}
+				else {
+					anErrorMessage += 'Unknown error';
+				}
+
+				return {
+					errorMsg: anErrorMessage,
+					errorType: badRequestErrorType
+				}
 			}
 		}
 
