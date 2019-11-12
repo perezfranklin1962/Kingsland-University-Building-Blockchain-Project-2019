@@ -439,8 +439,8 @@ app.post('/peers/connect', (req, res) => {
 	res.end(JSON.stringify(response));
 	*/
 
-	console.log('/peers/connect called...');
-	console.log('   req.body =', req.body);
+	// console.log('/peers/connect called...');
+	// console.log('   req.body =', req.body);
 
     // Used coding technique described in the https://tutorialzine.com/2017/07/javascript-async-await-explained
     // web page to call an Asynchronous fuction and get it's response.

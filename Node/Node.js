@@ -2287,7 +2287,7 @@ module.exports = class Node {
 	//
 	// Reference: Node/research/Synchronizing-the-Chain-and-Pending-Transactions.jpg file
 	async synchronizeChainFromPeerInfo(peerInfo) {
-		console.log("Inside of synchronizeChainFromPeerInfo!");
+		// console.log("Inside of synchronizeChainFromPeerInfo!");
 		// If the Peer Chain has less then or equal to the cummlative difficulty of this chain, then just return.
 		if (peerInfo.cumulativeDifficulty <= this.chain.calculateCumulativeDifficulty()) {
 			return { message: `Chain from ${peerInfo.nodeUrl} has a 'cumulativeDifficulty' that is less than or equal to this Node's chain - will not synchronize with peer` };
