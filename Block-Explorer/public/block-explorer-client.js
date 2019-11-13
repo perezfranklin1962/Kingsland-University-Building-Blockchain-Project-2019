@@ -15,6 +15,9 @@ $(document).ready(function () {
 	var currentBlocks = [];
 	var maximumNumberOfBlocksToView = 50;
 
+	// Used to keep track of the Transactions in a specific chosen Block under "View Transaction(s) Results"
+	var transactionsInBlock = [];
+
     showView("viewHome");
 
     $('#linkHome').click(function () {
@@ -36,6 +39,7 @@ $(document).ready(function () {
     $('#linkViewBlocks').click(function () {
 		console.log('linkViewBlocks clicked');
 		createViewBlocksResultsTable();
+		createViewTransactionsResultsTable();
 	    showView("viewBlocks");
     });
 
@@ -55,6 +59,10 @@ $(document).ready(function () {
     $('#buttonClearViewRangeOfBlocksInputs').click(clearViewRangeOfBlocksInputs);
     $('#buttonShowBlockByBlockIndexNumberViewBlocks').click(showBlockByBlockIndexNumberViewBlocks);
     $('#buttonClearBlockIndexNumberInput').click(clearBlockIndexNumberInput);
+
+    $('#buttonShowAllTransactionsInSpecifiedBlockViewBlocks').click(showAllTransactionsInSpecifiedBlock);
+    $('#buttonClearBlockIndexNumberViewAllTransactionsInBlockInput').click(clearBlockIndexNumberViewAllTransactionsInBlockInput);
+    $('#buttonClearViewTransactionsResultsBlocksView').click(clearViewTransactionsResultsBlocksView);
 
     function showView(viewName) {
         // Hide all views and show the selected view only
@@ -308,8 +316,83 @@ $(document).ready(function () {
              table_body += '</tr>';
         }
 
-        table_body+='</table>';
+        table_body += '</table>';
         $('#viewBlocksTableResultsDiv').html(table_body);
+	}
+
+	function createViewTransactionsResultsTable() {
+        var number_of_rows = transactionsInBlock.length;
+        var number_of_cols = 12;
+
+        var table_body = '<table style="width:100%">';
+        table_body += '<tr>';
+		table_body += '<th>From</th>';
+		table_body += '<th>To</th>';
+		table_body += '<th>Value</th>';
+		table_body += '<th>Fee</th>';
+		table_body += '<th>Date Created</th>';
+		table_body += '<th>Data</th>';
+		table_body += '<th>Sender Public Key</th>';
+		table_body += '<th>Transaction Data Hash</th>';
+		table_body += '<th>Sender Signature (r)</th>';
+		table_body += '<th>Sender Signature (s)</th>';
+		table_body += '<th>Mined in Block Index</th>';
+		table_body += '<th>Transfer Successful</th>';
+  		table_body += '</tr>';
+
+        for (var i = 0 ; i < number_of_rows; i++) {
+			table_body += '<tr>';
+            for (var j = 0; j < number_of_cols; j++) {
+            	table_body += '<td>';
+
+				let rowData = transactionsInBlock[i];
+                let table_data = '';
+                if (j === 0) {
+					table_data += rowData.from;
+				}
+				else if (j === 1) {
+					table_data += rowData.to;
+				}
+				else if (j === 2) {
+					table_data += rowData.value;
+				}
+				else if (j === 3) {
+					table_data += rowData.fee;
+				}
+				else if (j === 4) {
+					table_data += rowData.dateCreated;
+				}
+				else if (j === 5) {
+					table_data += rowData.data;
+				}
+				else if (j === 6) {
+					table_data += rowData.senderPubKey;
+				}
+				else if (j === 7) {
+					table_data += rowData.transactionDataHash;
+				}
+				else if (j === 8) {
+					table_data += rowData.senderSignature[0];
+				}
+				else if (j === 9) {
+					table_data += rowData.senderSignature[1];
+				}
+				else if (j === 10) {
+					table_data += rowData.minedInBlockIndex;
+				}
+				else if (j === 11) {
+					table_data += rowData.transferSuccessful;
+				}
+
+                table_body += table_data;
+                table_body += '</td>';
+             }
+
+             table_body += '</tr>';
+        }
+
+        table_body += '</table>';
+        $('#viewAllTransactionsInBlockTableResultsDiv').html(table_body);
 	}
 
 	async function showLatestBlocks() {
@@ -677,7 +760,7 @@ $(document).ready(function () {
 		}
 
 		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
-		// an array of Blocks starting at index 0.
+		// one Block.
 
 		currentBlocks = [ responseData ];
 
@@ -690,6 +773,97 @@ $(document).ready(function () {
 
 	function clearBlockIndexNumberInput() {
 		$('#blockIndexNumberViewBlocks').val('');
+	}
+
+	async function showAllTransactionsInSpecifiedBlock() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewBlocks').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		// Check for valid Block Index Number
+		let blockIndexNumber = $('#blockIndexNumberViewAllTransactionsInBlock').val().trim();
+		if (blockIndexNumber.length === 0) {
+			showError('Block Index Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Block Index Number that is an integer greater than or equal to 0.');
+			return;
+		}
+		if (!isNumeric(blockIndexNumber)) {
+			showError("Entered Block Index Number is not a positive integer. " +
+					"Please enter Block Index Number that is greater than or equal to 0.");
+			return;
+		}
+
+		blockIndexNumber = parseInt(blockIndexNumber);
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + `/blocks/${blockIndexNumber}`;
+		let responseData = undefined;
+		let errorResponse = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+				if (error.response != undefined) {
+					errorResponse = error.response;
+				}
+				else {
+					errorResponse = error;
+				}
+  		});
+
+  		hideInfo();
+
+  		// console.log('responseData =', responseData);
+  		console.log('errorResponse =', errorResponse);
+
+  		// If we cannot get the "/blocks" from the given "nodeIdUrl", then...
+  		if (responseData === undefined && errorResponse === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+		else if (errorResponse !== undefined) {
+			if (errorResponse.data !== undefined && errorResponse.data.errorMsg !== undefined) {
+				showError(errorResponse.data.errorMsg);
+				return;
+			}
+			else {
+				showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+					`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+					`provided that's not in the network.`);
+				return;
+			}
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// one Block.
+
+		transactionsInBlock = responseData.transactions; // array of transactions
+
+		createViewTransactionsResultsTable();
+		$('#totalNumberOfTransactionsInBlockResults').val(transactionsInBlock.length.toString(10));
+	}
+
+	function clearBlockIndexNumberViewAllTransactionsInBlockInput() {
+		$('#blockIndexNumberViewAllTransactionsInBlock').val('');
+	}
+
+	function clearViewTransactionsResultsBlocksView() {
+		transactionsInBlock = [ ];
+		createViewTransactionsResultsTable();
+		$('#totalNumberOfTransactionsInBlockResults').val('');
 	}
 
 	function viewBlocksTableClearResults() {
