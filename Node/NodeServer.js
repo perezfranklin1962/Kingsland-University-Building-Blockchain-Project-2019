@@ -156,7 +156,7 @@ app.get('/address/:address/transactions', (req, res) => {
 	let response = node.listTransactionsForAddress(address);
 
 	if (response.hasOwnProperty("errorMsg")) {
-				res.status(HttpStatus.NOT_FOUND);
+		res.status(HttpStatus.NOT_FOUND);
 	}
 
 	res.end(JSON.stringify(response));

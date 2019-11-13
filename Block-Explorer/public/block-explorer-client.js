@@ -15,8 +15,14 @@ $(document).ready(function () {
 	var currentBlocks = [];
 	var maximumNumberOfBlocksToView = 50;
 
-	// Used to keep track of the Transactions in a specific chosen Block under "View Transaction(s) Results"
+	// Used to keep track of the Transactions in a specific chosen Block under "View Transaction(s) Results" of "View Blocks"
 	var transactionsInBlock = [];
+
+	// Used to keep track of the Transactions for a given query under "View Transactions(s) Results" of "View Transactions"
+	var viewTransactionsResults = [ ];
+	var viewTransactionsResultsStartTransactionNumber = 1;
+	var viewTransactionsResultsDeltaIndex = 1;
+	var maximumNumberOfTransactionsToView = 50;
 
     showView("viewHome");
 
@@ -39,12 +45,15 @@ $(document).ready(function () {
     $('#linkViewBlocks').click(function () {
 		console.log('linkViewBlocks clicked');
 		createViewBlocksResultsTable();
-		createViewTransactionsResultsTable();
+		createViewTransactionsResultsTableInViewBlocks();
 	    showView("viewBlocks");
     });
 
-    // $('#buttonGetYourCoins').click(getYourCoins);
-    // $('#buttonClearFaucet').click(clearFaucet);
+    $('#linkViewTransactions').click(function () {
+		console.log('linkViewTransactions clicked');
+		createViewTransactionsResultsTableInViewTransactions();
+	    showView("viewTransactions");
+    });
 
     $('#buttonGetGeneralInfo').click(getGeneralInfo);
     $('#buttonClearGeneralInfoResults').click(clearGeneralInfoResults);
@@ -63,6 +72,19 @@ $(document).ready(function () {
     $('#buttonShowAllTransactionsInSpecifiedBlockViewBlocks').click(showAllTransactionsInSpecifiedBlock);
     $('#buttonClearBlockIndexNumberViewAllTransactionsInBlockInput').click(clearBlockIndexNumberViewAllTransactionsInBlockInput);
     $('#buttonClearViewTransactionsResultsBlocksView').click(clearViewTransactionsResultsBlocksView);
+
+    $('#buttonShowLatestConfirmedTransactions').click(showLatestConfirmedTransactions);
+    $('#buttonClearViewTransactionsResultsTransactionsView').click(clearViewTransactionsResultsTransactionsView);
+    $('#buttonShowConfirmedTransactionsRangeAscendingOrder').click(showConfirmedTransactionsRangeAscendingOrder);
+    $('#buttonShowConfirmedTransactionsRangeDescendingOrder').click(showConfirmedTransactionsRangeDescendingOrder);
+    $('#buttonClearShowRangeOfQueryInputsViewTransactions').click(clearShowRangeOfQueryInputsViewTransactions);
+    $('#buttonShowLatestPendingTransactions').click(showLatestPendingTransactions);
+    $('#buttonShowPendingTransactionsRangeAscendingOrder').click(showPendingTransactionsRangeAscendingOrder);
+    $('#buttonShowPendingTransactionsRangeDescendingOrder').click(showPendingTransactionsRangeDescendingOrder);
+    $('#buttonShowLatestTransactionsForPublicAddress').click(showLatestTransactionsForPublicAddress);
+    $('#buttonClearPublicAddressInputViewTransactions').click(clearPublicAddressInputViewTransactions);
+    $('#buttonShowTransactionsForPublicAddressRangeAscendingOrder').click(showTransactionsForPublicAddressRangeAscendingOrder);
+    $('#buttonShowTransactionsForPublicAddressRangeDescendingOrder').click(showTransactionsForPublicAddressRangeDescendingOrder);
 
     function showView(viewName) {
         // Hide all views and show the selected view only
@@ -320,7 +342,7 @@ $(document).ready(function () {
         $('#viewBlocksTableResultsDiv').html(table_body);
 	}
 
-	function createViewTransactionsResultsTable() {
+	function createViewTransactionsResultsTableInViewBlocks() {
         var number_of_rows = transactionsInBlock.length;
         var number_of_cols = 12;
 
@@ -393,6 +415,85 @@ $(document).ready(function () {
 
         table_body += '</table>';
         $('#viewAllTransactionsInBlockTableResultsDiv').html(table_body);
+	}
+
+	function createViewTransactionsResultsTableInViewTransactions() {
+        var number_of_rows = viewTransactionsResults.length;
+        var number_of_cols = 13;
+
+        var table_body = '<table style="width:100%">';
+        table_body += '<tr>';
+		table_body += '<th>Transaction #</th>';
+		table_body += '<th>Mined in Block Index</th>';
+		table_body += '<th>Date Created</th>';
+		table_body += '<th>From</th>';
+		table_body += '<th>To</th>';
+		table_body += '<th>Value</th>';
+		table_body += '<th>Fee</th>';
+		table_body += '<th>Data</th>';
+		table_body += '<th>Sender Public Key</th>';
+		table_body += '<th>Transaction Data Hash</th>';
+		table_body += '<th>Sender Signature (r)</th>';
+		table_body += '<th>Sender Signature (s)</th>';
+		table_body += '<th>Transfer Successful</th>';
+  		table_body += '</tr>';
+
+        for (var i = 0 ; i < number_of_rows; i++) {
+			table_body += '<tr>';
+            for (var j = 0; j < number_of_cols; j++) {
+            	table_body += '<td>';
+
+				let rowData = viewTransactionsResults[i];
+                let table_data = '';
+                if (j === 0) {
+					table_data += (viewTransactionsResultsStartTransactionNumber + (i * viewTransactionsResultsDeltaIndex)).toString(10);
+				}
+				else if (j === 1) {
+					table_data += rowData.minedInBlockIndex;
+				}
+				else if (j === 2) {
+					table_data += rowData.dateCreated;
+				}
+				else if (j === 3) {
+					table_data += rowData.from;
+				}
+				else if (j === 4) {
+					table_data += rowData.to;
+				}
+				else if (j === 5) {
+					table_data += rowData.value;
+				}
+				else if (j === 6) {
+					table_data += rowData.fee;
+				}
+				else if (j === 7) {
+					table_data += rowData.data;
+				}
+				else if (j === 8) {
+					table_data += rowData.senderPubKey;
+				}
+				else if (j === 9) {
+					table_data += rowData.transactionDataHash;
+				}
+				else if (j === 10) {
+					table_data += rowData.senderSignature[0];
+				}
+				else if (j === 11) {
+					table_data += rowData.senderSignature[1];
+				}
+				else if (j === 12) {
+					table_data += rowData.transferSuccessful;
+				}
+
+                table_body += table_data;
+                table_body += '</td>';
+             }
+
+             table_body += '</tr>';
+        }
+
+        table_body += '</table>';
+        $('#viewTransactionsResultsTableViewTransactionsDiv').html(table_body);
 	}
 
 	async function showLatestBlocks() {
@@ -852,7 +953,7 @@ $(document).ready(function () {
 
 		transactionsInBlock = responseData.transactions; // array of transactions
 
-		createViewTransactionsResultsTable();
+		createViewTransactionsResultsTableInViewBlocks();
 		$('#totalNumberOfTransactionsInBlockResults').val(transactionsInBlock.length.toString(10));
 	}
 
@@ -862,8 +963,1171 @@ $(document).ready(function () {
 
 	function clearViewTransactionsResultsBlocksView() {
 		transactionsInBlock = [ ];
-		createViewTransactionsResultsTable();
+		createViewTransactionsResultsTableInViewBlocks();
 		$('#totalNumberOfTransactionsInBlockResults').val('');
+	}
+
+	async function showLatestConfirmedTransactions() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + "/transactions/confirmed";
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/transactions/confirmed" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Confirmed Transactions.
+
+		viewTransactionsResults = responseData;
+
+  		// Sort this in descending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return b - a --> descending order
+			if (bTransaction.minedInBlockIndex !== aTransaction.minedInBlockIndex) {
+				return (bTransaction.minedInBlockIndex - aTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (bTransaction_dateCreated_timestamp - aTransaction_dateCreated_timestamp);
+		});
+
+		let totalNumberOfTransactionsThatExistsForTypeOfQuery = viewTransactionsResults.length;
+		let numberOfTransactionsShown = totalNumberOfTransactionsThatExistsForTypeOfQuery;
+		if (numberOfTransactionsShown > maximumNumberOfTransactionsToView) {
+			numberOfTransactionsShown = maximumNumberOfTransactionsToView;
+			viewTransactionsResults = viewTransactionsResults.slice(0, maximumNumberOfTransactionsToView);
+		}
+
+		$('#typeOfQueryViewTransactions').val($('#buttonShowLatestConfirmedTransactions').val());
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val(totalNumberOfTransactionsThatExistsForTypeOfQuery);
+		$('#numberOfTransactionsShownViewTransactions').val(numberOfTransactionsShown);
+
+		viewTransactionsResultsStartTransactionNumber = totalNumberOfTransactionsThatExistsForTypeOfQuery;
+		viewTransactionsResultsDeltaIndex = -1;
+		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	async function showLatestPendingTransactions() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + "/transactions/pending";
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/transactions/pending" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Pending Transactions.
+
+		viewTransactionsResults = responseData;
+
+  		// Sort this in descending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return b - a --> descending order
+			if (bTransaction.minedInBlockIndex !== aTransaction.minedInBlockIndex) {
+				return (bTransaction.minedInBlockIndex - aTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (bTransaction_dateCreated_timestamp - aTransaction_dateCreated_timestamp);
+		});
+
+		let totalNumberOfTransactionsThatExistsForTypeOfQuery = viewTransactionsResults.length;
+		let numberOfTransactionsShown = totalNumberOfTransactionsThatExistsForTypeOfQuery;
+		if (numberOfTransactionsShown > maximumNumberOfTransactionsToView) {
+			numberOfTransactionsShown = maximumNumberOfTransactionsToView;
+			viewTransactionsResults = viewTransactionsResults.slice(0, maximumNumberOfTransactionsToView);
+		}
+
+		$('#typeOfQueryViewTransactions').val($('#buttonShowLatestPendingTransactions').val());
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val(totalNumberOfTransactionsThatExistsForTypeOfQuery);
+		$('#numberOfTransactionsShownViewTransactions').val(numberOfTransactionsShown);
+
+		viewTransactionsResultsStartTransactionNumber = totalNumberOfTransactionsThatExistsForTypeOfQuery;
+		viewTransactionsResultsDeltaIndex = -1;
+		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	async function showLatestTransactionsForPublicAddress() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		let publicAddress = $('#publicAddressViewTransactions').val().trim().toLowerCase();
+		if (publicAddress.length === 0) {
+			showError('The Public Address cannot be an empty string or consist only of white space. Please enter a ' +
+				'Public Address value that is a 40-hex lowercase string.');
+			return;
+		}
+		if (!isValidPublicAddress(publicAddress)) {
+			showError("Entered Public Address is not a 40-hex valued lower case string. " +
+				"Please enter a Public Address that is a 40-hex valued lower case string.");
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + `/address/${publicAddress}/transactions`;
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/address/${publicAddress}/transactions" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Pending Transactions.
+
+		viewTransactionsResults = responseData.transactions;
+
+  		// Sort this in descending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return b - a --> descending order
+			if (bTransaction.minedInBlockIndex !== aTransaction.minedInBlockIndex) {
+				if (bTransaction.minedInBlockIndex === null) {
+					return 1;
+				}
+				if (aTransaction.minedInBlockIndex === null) {
+					return -1;
+				}
+
+				return (bTransaction.minedInBlockIndex - aTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (bTransaction_dateCreated_timestamp - aTransaction_dateCreated_timestamp);
+		});
+
+		// We want to be consistent in our dispaying to make sure that for Pending Transactions, the "minedInBlockIndex" and "transferSuccessful"
+		// are "undefined".
+		viewTransactionsResults.forEach(function(aTransaction) {
+			if (aTransaction.minedInBlockIndex === null) {
+				aTransaction.minedInBlockIndex = undefined;
+				aTransaction.transferSuccessful = undefined;
+			}
+		});
+
+		let totalNumberOfTransactionsThatExistsForTypeOfQuery = viewTransactionsResults.length;
+		let numberOfTransactionsShown = totalNumberOfTransactionsThatExistsForTypeOfQuery;
+		if (numberOfTransactionsShown > maximumNumberOfTransactionsToView) {
+			numberOfTransactionsShown = maximumNumberOfTransactionsToView;
+			viewTransactionsResults = viewTransactionsResults.slice(0, maximumNumberOfTransactionsToView);
+		}
+
+		$('#typeOfQueryViewTransactions').val($('#buttonShowLatestTransactionsForPublicAddress').val());
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val(totalNumberOfTransactionsThatExistsForTypeOfQuery);
+		$('#numberOfTransactionsShownViewTransactions').val(numberOfTransactionsShown);
+
+		viewTransactionsResultsStartTransactionNumber = totalNumberOfTransactionsThatExistsForTypeOfQuery;
+		viewTransactionsResultsDeltaIndex = -1;
+		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	async function showTransactionsForPublicAddressRangeAscendingOrder() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		let publicAddress = $('#publicAddressViewTransactions').val().trim().toLowerCase();
+		if (publicAddress.length === 0) {
+			showError('The Public Address cannot be an empty string or consist only of white space. Please enter a ' +
+				'Public Address value that is a 40-hex lowercase string.');
+			return;
+		}
+		if (!isValidPublicAddress(publicAddress)) {
+			showError("Entered Public Address is not a 40-hex valued lower case string. " +
+				"Please enter a Public Address that is a 40-hex valued lower case string.");
+			return;
+		}
+
+		// Check for valid Start Transaction Number
+		let startTransactionNumber = $('#startTransactionNumberViewTransactions').val().trim();
+		if (startTransactionNumber.length === 0) {
+			showError('Start Transaction Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Start Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(startTransactionNumber)) {
+			showError("Entered Start Transaction Number is not a positive integer. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		startTransactionNumber = parseInt(startTransactionNumber);
+		if (startTransactionNumber < 1) {
+			showError("Entered Start Transaction Number is an integer less than 1. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// Check for valid End Transaction Number
+		let endTransactionNumber = $('#endTransactionNumberViewTransactions').val().trim();
+		if (endTransactionNumber.length === 0) {
+			showError('End Transaction Number cannot be an empty string or consist only of white space. Please enter an ' +
+				'End Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(endTransactionNumber)) {
+			showError('Entered End Transaction Number is not a positive integer. ' +
+				'Please enter an End Transaction Number that is greater than or equal to 1.');
+			return;
+		}
+
+		endTransactionNumber = parseInt(endTransactionNumber);
+		if (endTransactionNumber < 1) {
+			showError("Entered End Transaction Number is an integer less than 1. " +
+					"Please enter an End Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// End Transaction Number cannot be less than the Start Transaction Number.
+		if (endTransactionNumber < startTransactionNumber) {
+			showError('End Transaction Number is less than Start Transaction Number. Please enter an End Transaction Number that is ' +
+				'greater than or equal to the Start Transaction Number.');
+			return;
+		}
+
+		// Cannot request a Block range of more than 50 blocks.
+		let numberOfTransactionsRequestedToView = endTransactionNumber - startTransactionNumber + 1;
+		if (numberOfTransactionsRequestedToView > maximumNumberOfTransactionsToView) {
+			showError(`Requested Range of Transactions to view (${numberOfTransactionsRequestedToView}) is greater than the ${maximumNumberOfTransactionsToView} allowed. ` +
+				`Please specify a Transaction Range to view that is less than or equal to ${maximumNumberOfTransactionsToView} transactions.`);
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + `/address/${publicAddress}/transactions`;
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/address/${publicAddress}/transactions" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+ 		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Pending Transactions.
+
+		// Check that the Start Transaction Number and End Transaction Number refers to existing Transactions in the Chain.
+		let totalNumberOfTransactions = responseData.transactions.length;
+		if (startTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered Start Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter a Start Transaction Number that is less than or eqaul to ${totalNumberOfTransactions}.`);
+			return;
+		}
+		if (endTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered End Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter an End Transaction Number that is less than or equal to ${totalNumberOfTransactions}.`);
+			return;
+		}
+
+		viewTransactionsResults = responseData.transactions;
+
+  		// Sort this in ascending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return a - b --> ascending order
+			if (bTransaction.minedInBlockIndex !== aTransaction.minedInBlockIndex) {
+				if (bTransaction.minedInBlockIndex === null) {
+					return -1;
+				}
+				if (aTransaction.minedInBlockIndex === null) {
+					return 1;
+				}
+
+				return (aTransaction.minedInBlockIndex - bTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (aTransaction_dateCreated_timestamp - bTransaction_dateCreated_timestamp);
+		});
+
+		// Slice for range of transactions AFTER doing ordering in ascending manner.
+		let totalNumberOfTransactionsThatExistsForTypeOfQuery = totalNumberOfTransactions;
+		viewTransactionsResults = viewTransactionsResults.slice(startTransactionNumber - 1, endTransactionNumber);
+
+		// We want to be consistent in our dispaying to make sure that for Pending Transactions, the "minedInBlockIndex" and "transferSuccessful"
+		// are "undefined".
+		viewTransactionsResults.forEach(function(aTransaction) {
+			if (aTransaction.minedInBlockIndex === null) {
+				aTransaction.minedInBlockIndex = undefined;
+				aTransaction.transferSuccessful = undefined;
+			}
+		});
+
+		$('#typeOfQueryViewTransactions').val($('#buttonShowTransactionsForPublicAddressRangeAscendingOrder').val());
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val(totalNumberOfTransactionsThatExistsForTypeOfQuery);
+		$('#numberOfTransactionsShownViewTransactions').val(numberOfTransactionsRequestedToView);
+
+		viewTransactionsResultsStartTransactionNumber = startTransactionNumber;
+		viewTransactionsResultsDeltaIndex = 1;
+		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	async function showTransactionsForPublicAddressRangeDescendingOrder() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		let publicAddress = $('#publicAddressViewTransactions').val().trim().toLowerCase();
+		if (publicAddress.length === 0) {
+			showError('The Public Address cannot be an empty string or consist only of white space. Please enter a ' +
+				'Public Address value that is a 40-hex lowercase string.');
+			return;
+		}
+		if (!isValidPublicAddress(publicAddress)) {
+			showError("Entered Public Address is not a 40-hex valued lower case string. " +
+				"Please enter a Public Address that is a 40-hex valued lower case string.");
+			return;
+		}
+
+		// Check for valid Start Transaction Number
+		let startTransactionNumber = $('#startTransactionNumberViewTransactions').val().trim();
+		if (startTransactionNumber.length === 0) {
+			showError('Start Transaction Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Start Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(startTransactionNumber)) {
+			showError("Entered Start Transaction Number is not a positive integer. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		startTransactionNumber = parseInt(startTransactionNumber);
+		if (startTransactionNumber < 1) {
+			showError("Entered Start Transaction Number is an integer less than 1. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// Check for valid End Transaction Number
+		let endTransactionNumber = $('#endTransactionNumberViewTransactions').val().trim();
+		if (endTransactionNumber.length === 0) {
+			showError('End Transaction Number cannot be an empty string or consist only of white space. Please enter an ' +
+				'End Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(endTransactionNumber)) {
+			showError('Entered End Transaction Number is not a positive integer. ' +
+				'Please enter an End Transaction Number that is greater than or equal to 1.');
+			return;
+		}
+
+		endTransactionNumber = parseInt(endTransactionNumber);
+		if (endTransactionNumber < 1) {
+			showError("Entered End Transaction Number is an integer less than 1. " +
+					"Please enter an End Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// End Transaction Number cannot be less than the Start Transaction Number.
+		if (endTransactionNumber < startTransactionNumber) {
+			showError('End Transaction Number is less than Start Transaction Number. Please enter an End Transaction Number that is ' +
+				'greater than or equal to the Start Transaction Number.');
+			return;
+		}
+
+		// Cannot request a Block range of more than 50 blocks.
+		let numberOfTransactionsRequestedToView = endTransactionNumber - startTransactionNumber + 1;
+		if (numberOfTransactionsRequestedToView > maximumNumberOfTransactionsToView) {
+			showError(`Requested Range of Transactions to view (${numberOfTransactionsRequestedToView}) is greater than the ${maximumNumberOfTransactionsToView} allowed. ` +
+				`Please specify a Transaction Range to view that is less than or equal to ${maximumNumberOfTransactionsToView} transactions.`);
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + `/address/${publicAddress}/transactions`;
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/address/${publicAddress}/transactions" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+ 		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Pending and Confirmed Transactions.
+
+		// Check that the Start Transaction Number and End Transaction Number refers to existing Transactions in the Chain.
+		let totalNumberOfTransactions = responseData.transactions.length;
+		if (startTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered Start Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter a Start Transaction Number that is less than or eqaul to ${totalNumberOfTransactions}.`);
+			return;
+		}
+		if (endTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered End Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter an End Transaction Number that is less than or equal to ${totalNumberOfTransactions}.`);
+			return;
+		}
+
+		viewTransactionsResults = responseData.transactions;
+
+  		// Sort this in ascending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return a - b --> ascending order
+			if (bTransaction.minedInBlockIndex !== aTransaction.minedInBlockIndex) {
+				if (bTransaction.minedInBlockIndex === null) {
+					return -1;
+				}
+				if (aTransaction.minedInBlockIndex === null) {
+					return 1;
+				}
+
+				return (aTransaction.minedInBlockIndex - bTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (aTransaction_dateCreated_timestamp - bTransaction_dateCreated_timestamp);
+		});
+
+		// Slice for range of transactions AFTER doing ordering in ascending manner.
+		let totalNumberOfTransactionsThatExistsForTypeOfQuery = totalNumberOfTransactions;
+		viewTransactionsResults = viewTransactionsResults.slice(startTransactionNumber - 1, endTransactionNumber);
+
+  		// Sort this in descending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return b - a --> descending order
+			if (bTransaction.minedInBlockIndex !== aTransaction.minedInBlockIndex) {
+				if (bTransaction.minedInBlockIndex === null) {
+					return 1;
+				}
+				if (aTransaction.minedInBlockIndex === null) {
+					return -1;
+				}
+
+				return (bTransaction.minedInBlockIndex - aTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (bTransaction_dateCreated_timestamp - aTransaction_dateCreated_timestamp);
+		});
+
+		// We want to be consistent in our dispaying to make sure that for Pending Transactions, the "minedInBlockIndex" and "transferSuccessful"
+		// are "undefined".
+		viewTransactionsResults.forEach(function(aTransaction) {
+			if (aTransaction.minedInBlockIndex === null) {
+				aTransaction.minedInBlockIndex = undefined;
+				aTransaction.transferSuccessful = undefined;
+			}
+		});
+
+		$('#typeOfQueryViewTransactions').val($('#buttonShowTransactionsForPublicAddressRangeDescendingOrder').val());
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val(totalNumberOfTransactionsThatExistsForTypeOfQuery);
+		$('#numberOfTransactionsShownViewTransactions').val(numberOfTransactionsRequestedToView);
+
+		viewTransactionsResultsStartTransactionNumber = endTransactionNumber;
+		viewTransactionsResultsDeltaIndex = -1;
+		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	async function showConfirmedTransactionsRangeAscendingOrder() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		// Check for valid Start Transaction Number
+		let startTransactionNumber = $('#startTransactionNumberViewTransactions').val().trim();
+		if (startTransactionNumber.length === 0) {
+			showError('Start Transaction Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Start Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(startTransactionNumber)) {
+			showError("Entered Start Transaction Number is not a positive integer. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		startTransactionNumber = parseInt(startTransactionNumber);
+		if (startTransactionNumber < 1) {
+			showError("Entered Start Transaction Number is an integer less than 1. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// Check for valid End Transaction Number
+		let endTransactionNumber = $('#endTransactionNumberViewTransactions').val().trim();
+		if (endTransactionNumber.length === 0) {
+			showError('End Transaction Number cannot be an empty string or consist only of white space. Please enter an ' +
+				'End Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(endTransactionNumber)) {
+			showError('Entered End Transaction Number is not a positive integer. ' +
+				'Please enter an End Transaction Number that is greater than or equal to 1.');
+			return;
+		}
+
+		endTransactionNumber = parseInt(endTransactionNumber);
+		if (endTransactionNumber < 1) {
+			showError("Entered End Transaction Number is an integer less than 1. " +
+					"Please enter an End Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// End Transaction Number cannot be less than the Start Transaction Number.
+		if (endTransactionNumber < startTransactionNumber) {
+			showError('End Transaction Number is less than Start Transaction Number. Please enter an End Transaction Number that is ' +
+				'greater than or equal to the Start Transaction Number.');
+			return;
+		}
+
+		// Cannot request a Block range of more than 50 blocks.
+		let numberOfTransactionsRequestedToView = endTransactionNumber - startTransactionNumber + 1;
+		if (numberOfTransactionsRequestedToView > maximumNumberOfTransactionsToView) {
+			showError(`Requested Range of Transactions to view (${numberOfTransactionsRequestedToView}) is greater than the ${maximumNumberOfTransactionsToView} allowed. ` +
+				`Please specify a Transaction Range to view that is less than or equal to ${maximumNumberOfTransactionsToView} transactions.`);
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + "/transactions/confirmed";
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/transactions/confirmed" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Confirmed Transactions.
+
+		// Check that the Start Transaction Number and End Transaction Number refers to existing Transactions in the Chain.
+		let totalNumberOfTransactions = responseData.length;
+		if (startTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered Start Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter a Start Transaction Number that is less than or eqaul to ${totalNumberOfTransactions}.`);
+			return;
+		}
+		if (endTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered End Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter an End Transaction Number that is less than or equal to ${totalNumberOfTransactions}.`);
+			return;
+		}
+
+		viewTransactionsResults = responseData;
+
+  		// Sort this in ascending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return a - b --> ascending order
+			if (aTransaction.minedInBlockIndex !== bTransaction.minedInBlockIndex) {
+				return (aTransaction.minedInBlockIndex - bTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (aTransaction_dateCreated_timestamp - bTransaction_dateCreated_timestamp);
+		});
+
+		// Do slicing AFTER sorting in ascending manner.
+		let totalNumberOfTransactionsThatExistsForTypeOfQuery = totalNumberOfTransactions;
+		viewTransactionsResults = viewTransactionsResults.slice(startTransactionNumber - 1, endTransactionNumber);
+
+		$('#typeOfQueryViewTransactions').val($('#buttonShowConfirmedTransactionsRangeAscendingOrder').val());
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val(totalNumberOfTransactionsThatExistsForTypeOfQuery);
+		$('#numberOfTransactionsShownViewTransactions').val(numberOfTransactionsRequestedToView);
+
+		viewTransactionsResultsStartTransactionNumber = startTransactionNumber;
+		viewTransactionsResultsDeltaIndex = 1;
+		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	async function showPendingTransactionsRangeAscendingOrder() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		// Check for valid Start Transaction Number
+		let startTransactionNumber = $('#startTransactionNumberViewTransactions').val().trim();
+		if (startTransactionNumber.length === 0) {
+			showError('Start Transaction Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Start Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(startTransactionNumber)) {
+			showError("Entered Start Transaction Number is not a positive integer. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		startTransactionNumber = parseInt(startTransactionNumber);
+		if (startTransactionNumber < 1) {
+			showError("Entered Start Transaction Number is an integer less than 1. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// Check for valid End Transaction Number
+		let endTransactionNumber = $('#endTransactionNumberViewTransactions').val().trim();
+		if (endTransactionNumber.length === 0) {
+			showError('End Transaction Number cannot be an empty string or consist only of white space. Please enter an ' +
+				'End Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(endTransactionNumber)) {
+			showError('Entered End Transaction Number is not a positive integer. ' +
+				'Please enter an End Transaction Number that is greater than or equal to 1.');
+			return;
+		}
+
+		endTransactionNumber = parseInt(endTransactionNumber);
+		if (endTransactionNumber < 1) {
+			showError("Entered End Transaction Number is an integer less than 1. " +
+					"Please enter an End Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// End Transaction Number cannot be less than the Start Transaction Number.
+		if (endTransactionNumber < startTransactionNumber) {
+			showError('End Transaction Number is less than Start Transaction Number. Please enter an End Transaction Number that is ' +
+				'greater than or equal to the Start Transaction Number.');
+			return;
+		}
+
+		// Cannot request a Block range of more than 50 blocks.
+		let numberOfTransactionsRequestedToView = endTransactionNumber - startTransactionNumber + 1;
+		if (numberOfTransactionsRequestedToView > maximumNumberOfTransactionsToView) {
+			showError(`Requested Range of Transactions to view (${numberOfTransactionsRequestedToView}) is greater than the ${maximumNumberOfTransactionsToView} allowed. ` +
+				`Please specify a Transaction Range to view that is less than or equal to ${maximumNumberOfTransactionsToView} transactions.`);
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + "/transactions/pending";
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/transactions/pending" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Pending Transactions.
+
+		// Check that the Start Transaction Number and End Transaction Number refers to existing Transactions in the Chain.
+		let totalNumberOfTransactions = responseData.length;
+		if (startTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered Start Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter a Start Transaction Number that is less than or eqaul to ${totalNumberOfTransactions}.`);
+			return;
+		}
+		if (endTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered End Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter an End Transaction Number that is less than or equal to ${totalNumberOfTransactions}.`);
+			return;
+		}
+
+		viewTransactionsResults = responseData;
+
+  		// Sort this in ascending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return a - b --> ascending order
+			if (aTransaction.minedInBlockIndex !== bTransaction.minedInBlockIndex) {
+				return (aTransaction.minedInBlockIndex - bTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (aTransaction_dateCreated_timestamp - bTransaction_dateCreated_timestamp);
+		});
+
+		// Do slicing AFTER doing a sort via ascending order.
+		let totalNumberOfTransactionsThatExistsForTypeOfQuery = totalNumberOfTransactions;
+		viewTransactionsResults = viewTransactionsResults.slice(startTransactionNumber - 1, endTransactionNumber);
+
+		$('#typeOfQueryViewTransactions').val($('#buttonShowPendingTransactionsRangeAscendingOrder').val());
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val(totalNumberOfTransactionsThatExistsForTypeOfQuery);
+		$('#numberOfTransactionsShownViewTransactions').val(numberOfTransactionsRequestedToView);
+
+		viewTransactionsResultsStartTransactionNumber = startTransactionNumber;
+		viewTransactionsResultsDeltaIndex = 1;
+		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	async function showConfirmedTransactionsRangeDescendingOrder() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		// Check for valid Start Transaction Number
+		let startTransactionNumber = $('#startTransactionNumberViewTransactions').val().trim();
+		if (startTransactionNumber.length === 0) {
+			showError('Start Transaction Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Start Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(startTransactionNumber)) {
+			showError("Entered Start Transaction Number is not a positive integer. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		startTransactionNumber = parseInt(startTransactionNumber);
+		if (startTransactionNumber < 1) {
+			showError("Entered Start Transaction Number is an integer less than 1. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// Check for valid End Transaction Number
+		let endTransactionNumber = $('#endTransactionNumberViewTransactions').val().trim();
+		if (endTransactionNumber.length === 0) {
+			showError('End Transaction Number cannot be an empty string or consist only of white space. Please enter an ' +
+				'End Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(endTransactionNumber)) {
+			showError('Entered End Transaction Number is not a positive integer. ' +
+				'Please enter an End Transaction Number that is greater than or equal to 1.');
+			return;
+		}
+
+		endTransactionNumber = parseInt(endTransactionNumber);
+		if (endTransactionNumber < 1) {
+			showError("Entered End Transaction Number is an integer less than 1. " +
+					"Please enter an End Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// End Transaction Number cannot be less than the Start Transaction Number.
+		if (endTransactionNumber < startTransactionNumber) {
+			showError('End Transaction Number is less than Start Transaction Number. Please enter an End Transaction Number that is ' +
+				'greater than or equal to the Start Transaction Number.');
+			return;
+		}
+
+		// Cannot request a Block range of more than 50 blocks.
+		let numberOfTransactionsRequestedToView = endTransactionNumber - startTransactionNumber + 1;
+		if (numberOfTransactionsRequestedToView > maximumNumberOfTransactionsToView) {
+			showError(`Requested Range of Transactions to view (${numberOfTransactionsRequestedToView}) is greater than the ${maximumNumberOfTransactionsToView} allowed. ` +
+				`Please specify a Transaction Range to view that is less than or equal to ${maximumNumberOfTransactionsToView} transactions.`);
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + "/transactions/confirmed";
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/transactions/confirmed" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Confirmed Transactions.
+
+		// Check that the Start Transaction Number and End Transaction Number refers to existing Transactions in the Chain.
+		let totalNumberOfTransactions = responseData.length;
+		if (startTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered Start Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter a Start Transaction Number that is less than or eqaul to ${totalNumberOfTransactions}.`);
+			return;
+		}
+		if (endTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered End Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter an End Transaction Number that is less than or equal to ${totalNumberOfTransactions}.`);
+			return;
+		}
+
+		viewTransactionsResults = responseData;
+
+  		// Sort this in ascending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return a - b --> ascending order
+			if (aTransaction.minedInBlockIndex !== bTransaction.minedInBlockIndex) {
+				return (aTransaction.minedInBlockIndex - bTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (aTransaction_dateCreated_timestamp - bTransaction_dateCreated_timestamp);
+		});
+
+		// Slice AFTER doing sirt in acsending manner.
+		let totalNumberOfTransactionsThatExistsForTypeOfQuery = totalNumberOfTransactions;
+		viewTransactionsResults = viewTransactionsResults.slice(startTransactionNumber - 1, endTransactionNumber);
+
+  		// Sort this in descending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return b - a --> descending order
+			if (aTransaction.minedInBlockIndex !== bTransaction.minedInBlockIndex) {
+				return (bTransaction.minedInBlockIndex - aTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (bTransaction_dateCreated_timestamp - aTransaction_dateCreated_timestamp);
+		});
+
+		// console.log('viewTransactionsResults[0] (after slice and descending ordering) =', viewTransactionsResults[0]);
+
+		$('#typeOfQueryViewTransactions').val($('#buttonShowConfirmedTransactionsRangeDescendingOrder').val());
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val(totalNumberOfTransactionsThatExistsForTypeOfQuery);
+		$('#numberOfTransactionsShownViewTransactions').val(numberOfTransactionsRequestedToView);
+
+		viewTransactionsResultsStartTransactionNumber = endTransactionNumber;
+		viewTransactionsResultsDeltaIndex = -1;
+		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	async function showPendingTransactionsRangeDescendingOrder() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		// Check for valid Start Transaction Number
+		let startTransactionNumber = $('#startTransactionNumberViewTransactions').val().trim();
+		if (startTransactionNumber.length === 0) {
+			showError('Start Transaction Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Start Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(startTransactionNumber)) {
+			showError("Entered Start Transaction Number is not a positive integer. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		startTransactionNumber = parseInt(startTransactionNumber);
+		if (startTransactionNumber < 1) {
+			showError("Entered Start Transaction Number is an integer less than 1. " +
+					"Please enter a Start Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// Check for valid End Transaction Number
+		let endTransactionNumber = $('#endTransactionNumberViewTransactions').val().trim();
+		if (endTransactionNumber.length === 0) {
+			showError('End Transaction Number cannot be an empty string or consist only of white space. Please enter an ' +
+				'End Transaction Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(endTransactionNumber)) {
+			showError('Entered End Transaction Number is not a positive integer. ' +
+				'Please enter an End Transaction Number that is greater than or equal to 1.');
+			return;
+		}
+
+		endTransactionNumber = parseInt(endTransactionNumber);
+		if (endTransactionNumber < 1) {
+			showError("Entered End Transaction Number is an integer less than 1. " +
+					"Please enter an End Transaction Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// End Transaction Number cannot be less than the Start Transaction Number.
+		if (endTransactionNumber < startTransactionNumber) {
+			showError('End Transaction Number is less than Start Transaction Number. Please enter an End Transaction Number that is ' +
+				'greater than or equal to the Start Transaction Number.');
+			return;
+		}
+
+		// Cannot request a Block range of more than 50 blocks.
+		let numberOfTransactionsRequestedToView = endTransactionNumber - startTransactionNumber + 1;
+		if (numberOfTransactionsRequestedToView > maximumNumberOfTransactionsToView) {
+			showError(`Requested Range of Transactions to view (${numberOfTransactionsRequestedToView}) is greater than the ${maximumNumberOfTransactionsToView} allowed. ` +
+				`Please specify a Transaction Range to view that is less than or equal to ${maximumNumberOfTransactionsToView} transactions.`);
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + "/transactions/pending";
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/transactions/pending" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Confirmed Transactions.
+
+		// Check that the Start Transaction Number and End Transaction Number refers to existing Transactions in the Chain.
+		let totalNumberOfTransactions = responseData.length;
+		if (startTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered Start Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter a Start Transaction Number that is less than or eqaul to ${totalNumberOfTransactions}.`);
+			return;
+		}
+		if (endTransactionNumber > totalNumberOfTransactions) {
+			showError(`Entered End Transaction Number refers to a Transaction Number that does not exist for this type of query. ` +
+				`The current number of transactions for this type of query is ${totalNumberOfTransactions}. ` +
+				`Please enter an End Transaction Number that is less than or equal to ${totalNumberOfTransactions}.`);
+			return;
+		}
+
+		viewTransactionsResults = responseData;
+
+  		// Sort this in ascending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return a - b --> ascending order
+			if (aTransaction.minedInBlockIndex !== bTransaction.minedInBlockIndex) {
+				return (aTransaction.minedInBlockIndex - bTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (aTransaction_dateCreated_timestamp - bTransaction_dateCreated_timestamp);
+		});
+
+		// Slice AFTER sorting in ascending order.
+		let totalNumberOfTransactionsThatExistsForTypeOfQuery = totalNumberOfTransactions;
+		viewTransactionsResults = viewTransactionsResults.slice(startTransactionNumber - 1, endTransactionNumber);
+
+  		// Sort this in descending order - first by "minedInBlockIndex" followed by "dateCreated".
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewTransactionsResults = viewTransactionsResults.sort(function(aTransaction, bTransaction) { // return b - a --> descending order
+			if (aTransaction.minedInBlockIndex !== bTransaction.minedInBlockIndex) {
+				return (bTransaction.minedInBlockIndex - aTransaction.minedInBlockIndex);
+			}
+
+			aTransaction_dateCreated_timestamp = new Date(aTransaction.dateCreated).getTime();
+			bTransaction_dateCreated_timestamp = new Date(bTransaction.dateCreated).getTime();
+			return (bTransaction_dateCreated_timestamp - aTransaction_dateCreated_timestamp);
+		});
+
+		// console.log('viewTransactionsResults[0] (after slice and descending ordering) =', viewTransactionsResults[0]);
+
+		$('#typeOfQueryViewTransactions').val($('#buttonShowPendingTransactionsRangeDescendingOrder').val());
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val(totalNumberOfTransactionsThatExistsForTypeOfQuery);
+		$('#numberOfTransactionsShownViewTransactions').val(numberOfTransactionsRequestedToView);
+
+		viewTransactionsResultsStartTransactionNumber = endTransactionNumber;
+		viewTransactionsResultsDeltaIndex = -1;
+		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	function clearPublicAddressInputViewTransactions() {
+		$('#publicAddressViewTransactions').val('');
+	}
+
+	function clearShowRangeOfQueryInputsViewTransactions() {
+		$('#startTransactionNumberViewTransactions').val('');
+		$('#endTransactionNumberViewTransactions').val('');
+	}
+
+	function clearViewTransactionsResultsTransactionsView() {
+		viewTransactionsResults = [ ];
+
+		$('#typeOfQueryViewTransactions').val('');
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val('');
+		$('#numberOfTransactionsShownViewTransactions').val('');
+		createViewTransactionsResultsTableInViewTransactions();
 	}
 
 	function viewBlocksTableClearResults() {
