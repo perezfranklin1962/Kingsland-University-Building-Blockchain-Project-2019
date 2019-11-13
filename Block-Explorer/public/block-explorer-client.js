@@ -54,6 +54,7 @@ $(document).ready(function () {
     $('#buttonShowBlocksRangeDescendingOrder').click(showBlocksRangeDescendingOrder);
     $('#buttonClearViewRangeOfBlocksInputs').click(clearViewRangeOfBlocksInputs);
     $('#buttonShowBlockByBlockIndexNumberViewBlocks').click(showBlockByBlockIndexNumberViewBlocks);
+    $('#buttonClearBlockIndexNumberInput').click(clearBlockIndexNumberInput);
 
     function showView(viewName) {
         // Hide all views and show the selected view only
@@ -687,10 +688,16 @@ $(document).ready(function () {
 		$('#totalNumberOfBlocksViewBlocksDiv').hide();
 	}
 
+	function clearBlockIndexNumberInput() {
+		$('#blockIndexNumberViewBlocks').val('');
+	}
+
 	function viewBlocksTableClearResults() {
 		currentBlocks = [];
 		createViewBlocksResultsTable();
 		$('#totalNumberOfBlocksViewRangeOfBlocksResults').val('');
 		$('#numberOfBlocksShownViewRangeOfBlocksResults').val('');
+
+		$('#totalNumberOfBlocksViewBlocksDiv').show();
 	}
 });
