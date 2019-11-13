@@ -86,6 +86,9 @@ $(document).ready(function () {
     $('#buttonShowTransactionsForPublicAddressRangeAscendingOrder').click(showTransactionsForPublicAddressRangeAscendingOrder);
     $('#buttonShowTransactionsForPublicAddressRangeDescendingOrder').click(showTransactionsForPublicAddressRangeDescendingOrder);
 
+    $('#buttonViewSpecificTransactionViewTransactions').click(viewSpecificTransactionViewTransactions);
+    $('#buttonClearViewSpecificTransactionInputViewTransactions').click(clearViewSpecificTransactionInputViewTransactions);
+
     function showView(viewName) {
         // Hide all views and show the selected view only
         $('main > section').hide();
@@ -870,6 +873,95 @@ $(document).ready(function () {
 		$('#numberOfBlocksShownViewRangeOfBlocksResults').val('1');
 
 		$('#totalNumberOfBlocksViewBlocksDiv').hide();
+	}
+
+    async function viewSpecificTransactionViewTransactions() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		let transactionDataHash = $('#transactionDataHashViewTransactions').val().trim().toLowerCase();
+		if (transactionDataHash.length === 0) {
+			showError('The Transaction Data Hash cannot be an empty string or consist only of white space. Please enter a ' +
+				'Transaction Data Hash value that is a 64-hex lowercase string.');
+			return;
+		}
+		if (!isValid_64_Hex_string(transactionDataHash)) {
+			showError("Entered Transaction Data Hash is not a 64-hex valued lower case string. " +
+				"Please enter a Transaction Data Hash that is a 64-hex valued lower case string.");
+			return;
+		};
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + `/transactions/${transactionDataHash}`;
+		let responseData = undefined;
+		let errorResponse = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+				if (error.response != undefined) {
+					errorResponse = error.response;
+				}
+				else {
+					errorResponse = error;
+				}
+  		});
+
+  		hideInfo();
+
+  		// console.log('responseData =', responseData);
+  		// console.log('errorResponse =', errorResponse);
+
+  		// If we cannot get the "/transactions/${transactionDataHash}" from the given "nodeIdUrl", then...
+  		if (responseData === undefined && errorResponse === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+		else if (errorResponse !== undefined) {
+			if (errorResponse.data !== undefined && errorResponse.data.errorMsg !== undefined) {
+				showError(errorResponse.data.errorMsg);
+				return;
+			}
+			else {
+				showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+					`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+					`provided that's not in the network.`);
+				return;
+			}
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// one Block.
+
+		// If it's a Pending Transaction, than display the appropriate fields as "undefined".
+		if (responseData.minedInBlockIndex === null) {
+			responseData.minedInBlockIndex = undefined;
+			responseData.transferSuccessful = undefined;
+		}
+
+		viewTransactionsResults = [ responseData ];
+
+		$('#typeOfQueryViewTransactions').val($('#buttonViewSpecificTransactionViewTransactions').val());
+		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val('1');
+		$('#numberOfTransactionsShownViewTransactions').val('1');
+
+		viewTransactionsResultsStartTransactionNumber = 1;
+		viewTransactionsResultsDeltaIndex = 1;
+		createViewTransactionsResultsTableInViewTransactions();
 	}
 
 	function clearBlockIndexNumberInput() {
@@ -2110,6 +2202,10 @@ $(document).ready(function () {
 		viewTransactionsResultsStartTransactionNumber = endTransactionNumber;
 		viewTransactionsResultsDeltaIndex = -1;
 		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	function clearViewSpecificTransactionInputViewTransactions() {
+		$('#transactionDataHashViewTransactions').val('');
 	}
 
 	function clearPublicAddressInputViewTransactions() {
