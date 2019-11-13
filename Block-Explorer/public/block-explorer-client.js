@@ -11,6 +11,10 @@ $(document).ready(function () {
 	// Used to keep track of the current peers;
 	var currentPeersMap = new Map();
 
+	// Used to keep track of the Blocks that are currently being shown under "View Block(s) Results"
+	var currentBlocks = [];
+	var maximumNumberOfBlocksToView = 50;
+
     showView("viewHome");
 
     $('#linkHome').click(function () {
@@ -25,12 +29,13 @@ $(document).ready(function () {
 
     $('#linkViewPeers').click(function () {
 		console.log('linkViewPeers clicked');
-		createViewPeersTable(currentPeersMap);
+		createViewPeersTable();
 	    showView("viewPeers");
     });
 
     $('#linkViewBlocks').click(function () {
 		console.log('linkViewBlocks clicked');
+		createViewBlocksResultsTable();
 	    showView("viewBlocks");
     });
 
@@ -42,6 +47,13 @@ $(document).ready(function () {
 
     $('#buttonGetPeers').click(getPeers);
     $('#buttonClearPeersResults').click(clearPeersResults);
+
+    $('#buttonShowLatestBlocks').click(showLatestBlocks);
+    $('#buttonViewBlocksTableClearResults').click(viewBlocksTableClearResults);
+    $('#buttonShowBlocksRangeAscendingOrder').click(showBlocksRangeAscendingOrder);
+    $('#buttonShowBlocksRangeDescendingOrder').click(showBlocksRangeDescendingOrder);
+    $('#buttonClearViewRangeOfBlocksInputs').click(clearViewRangeOfBlocksInputs);
+    $('#buttonShowBlockByBlockIndexNumberViewBlocks').click(showBlockByBlockIndexNumberViewBlocks);
 
     function showView(viewName) {
         // Hide all views and show the selected view only
@@ -236,4 +248,449 @@ $(document).ready(function () {
 		createViewPeersTable();
 	}
 
+	function createViewBlocksResultsTable() {
+        var number_of_rows = currentBlocks.length;
+        var number_of_cols = 9;
+
+        var table_body = '<table style="width:100%">';
+        table_body += '<tr>';
+		table_body += '<th>Index</th>';
+		table_body += '<th>Transactions</th>';
+		table_body += '<th>Difficulty</th>';
+		table_body += '<th>Previous Block Hash</th>';
+		table_body += '<th>Mined By</th>';
+		table_body += '<th>Block Data Hash</th>';
+		table_body += '<th>Nonce</th>';
+		table_body += '<th>Date Created</th>';
+		table_body += '<th>Block Hash</th>';
+  		table_body += '</tr>';
+
+        for (var i = 0 ; i < number_of_rows; i++) {
+			table_body += '<tr>';
+            for (var j = 0; j < number_of_cols; j++) {
+            	table_body += '<td>';
+
+				let rowData = currentBlocks[i];
+                let table_data = '';
+                if (j === 0) {
+					table_data += rowData.index;
+				}
+				else if (j === 1) {
+					table_data += rowData.transactions.length;
+				}
+				else if (j === 2) {
+					table_data += rowData.difficulty;
+				}
+				else if (j === 3) {
+					table_data += rowData.prevBlockHash;
+				}
+				else if (j === 4) {
+					table_data += rowData.minedBy;
+				}
+				else if (j === 5) {
+					table_data += rowData.blockDataHash;
+				}
+				else if (j === 6) {
+					table_data += rowData.nonce;
+				}
+				else if (j === 7) {
+					table_data += rowData.dateCreated;
+				}
+				else if (j === 8) {
+					table_data += rowData.blockHash;
+				}
+
+                table_body += table_data;
+                table_body += '</td>';
+             }
+
+             table_body += '</tr>';
+        }
+
+        table_body+='</table>';
+        $('#viewBlocksTableResultsDiv').html(table_body);
+	}
+
+	async function showLatestBlocks() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewBlocks').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + "/blocks";
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// console.log('responseData =', responseData);
+
+  		// If we cannot get the "/blocks" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Blocks strating at index 0.
+
+		currentBlocks = [];
+
+		let blockIndex = responseData.length - 1;
+		for (let i = 0; i < maximumNumberOfBlocksToView; i++) {
+			if (blockIndex < 0) {
+				break;
+			}
+
+			currentBlocks.push(responseData[blockIndex]);
+			blockIndex--;
+		}
+
+		createViewBlocksResultsTable();
+		$('#totalNumberOfBlocksViewRangeOfBlocksResults').val(responseData.length.toString(10));
+		$('#numberOfBlocksShownViewRangeOfBlocksResults').val(currentBlocks.length.toString(10));
+
+		$('#totalNumberOfBlocksViewBlocksDiv').show();
+	}
+
+	function clearViewRangeOfBlocksInputs() {
+		$('#startBlockIndexNumberViewBlocks').val('');
+		$('#endBlockIndexNumberViewBlocks').val('');
+	}
+
+	async function showBlocksRangeAscendingOrder() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewBlocks').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		// Check for valid Start Block Index Number
+		let startBlockIndexNumber = $('#startBlockIndexNumberViewBlocks').val().trim();
+		if (startBlockIndexNumber.length === 0) {
+			showError('Start Block Index Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Start Block Index Number that is an integer greater than or equal to 0.');
+			return;
+		}
+		if (!isNumeric(startBlockIndexNumber)) {
+			showError("Entered Start Block Index Number is not a positive integer. " +
+					"Please enter a Start Block Index Number that is greater than or equal to 0.");
+			return;
+		}
+
+		startBlockIndexNumber = parseInt(startBlockIndexNumber);
+
+		// Check for valid End Block Index Number
+		let endBlockIndexNumber = $('#endBlockIndexNumberViewBlocks').val().trim();
+		if (endBlockIndexNumber.length === 0) {
+			showError('End Block Index Number cannot be an empty string or consist only of white space. Please enter an ' +
+				'End Block Index Number that is an integer greater than or equal to 0.');
+			return;
+		}
+		if (!isNumeric(endBlockIndexNumber)) {
+			showError('Entered End Block Index Number is not a positive integer. ' +
+				'Please enter an End Block Index Number that is greater than or equal to 0.');
+			return;
+		}
+
+		endBlockIndexNumber = parseInt(endBlockIndexNumber);
+
+		// End Block Index Number cannot be less than the Start Block Index Number.
+		if (endBlockIndexNumber < startBlockIndexNumber) {
+			showError('End Block Index Number is less than Start Block Index Number. Please enter an End Block Index Number that is ' +
+				'greater than or equal to the Start Block Index Number.');
+			return;
+		}
+
+		// Cannot request a Block range of more than 50 blocks.
+		let numberOfBlocksRequestedToView = endBlockIndexNumber - startBlockIndexNumber + 1;
+		if (numberOfBlocksRequestedToView > maximumNumberOfBlocksToView) {
+			showError(`Requested Range of Blocks to view (${numberOfBlocksRequestedToView}) is greater than the ${maximumNumberOfBlocksToView} allowed. ` +
+				`Please specify a Block Range to view that is less than or equal to ${maximumNumberOfBlocksToView} blocks.`);
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + "/blocks";
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// console.log('responseData =', responseData);
+
+  		// If we cannot get the "/blocks" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Blocks starting at index 0.
+
+		// Check that the Start Block Index Number and End Block Index Number refers to existing blocks in the Chain.
+		let totalNumberOfBlocksInBlockchain = responseData.length;
+		if (startBlockIndexNumber >= totalNumberOfBlocksInBlockchain) {
+			showError(`Entered Start Block Index Number refers to a Block Number that does not exist in the Chain. ` +
+				`The current number of blocks in the Chain is ${totalNumberOfBlocksInBlockchain}. ` +
+				`Please enter a Start Block Index Number that is less than ${totalNumberOfBlocksInBlockchain}.`);
+			return;
+		}
+		if (endBlockIndexNumber >= totalNumberOfBlocksInBlockchain) {
+			showError(`Entered End Block Index Number refers to a Block Number that does not exist in the Chain. ` +
+				`The current number of blocks in the Chain is ${totalNumberOfBlocksInBlockchain}. ` +
+				`Please enter an End Block Index Number that is less than ${totalNumberOfBlocksInBlockchain}.`);
+			return;
+		}
+
+		currentBlocks = [];
+
+		for (let i = startBlockIndexNumber; i <= endBlockIndexNumber; i++) {
+			currentBlocks.push(responseData[i]);
+		}
+
+		createViewBlocksResultsTable();
+		$('#totalNumberOfBlocksViewRangeOfBlocksResults').val(totalNumberOfBlocksInBlockchain.toString(10));
+		$('#numberOfBlocksShownViewRangeOfBlocksResults').val(currentBlocks.length.toString(10));
+
+		$('#totalNumberOfBlocksViewBlocksDiv').show();
+	}
+
+	async function showBlocksRangeDescendingOrder() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewBlocks').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		// Check for valid Start Block Index Number
+		let startBlockIndexNumber = $('#startBlockIndexNumberViewBlocks').val().trim();
+		if (startBlockIndexNumber.length === 0) {
+			showError('Start Block Index Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Start Block Index Number that is an integer greater than or equal to 0.');
+			return;
+		}
+		if (!isNumeric(startBlockIndexNumber)) {
+			showError("Entered Start Block Index Number is not a positive integer. " +
+					"Please enter a Start Block Index Number that is greater than or equal to 0.");
+			return;
+		}
+
+		startBlockIndexNumber = parseInt(startBlockIndexNumber);
+
+		// Check for valid End Block Index Number
+		let endBlockIndexNumber = $('#endBlockIndexNumberViewBlocks').val().trim();
+		if (endBlockIndexNumber.length === 0) {
+			showError('End Block Index Number cannot be an empty string or consist only of white space. Please enter an ' +
+				'End Block Index Number that is an integer greater than or equal to 0.');
+			return;
+		}
+		if (!isNumeric(endBlockIndexNumber)) {
+			showError('Entered End Block Index Number is not a positive integer. ' +
+				'Please enter an End Block Index Number that is greater than or equal to 0.');
+			return;
+		}
+
+		endBlockIndexNumber = parseInt(endBlockIndexNumber);
+
+		// End Block Index Number cannot be less than the Start Block Index Number.
+		if (endBlockIndexNumber < startBlockIndexNumber) {
+			showError('End Block Index Number is less than Start Block Index Number. Please enter an End Block Index Number that is ' +
+				'greater than or equal to the Start Block Index Number.');
+			return;
+		}
+
+		// Cannot request a Block range of more than 50 blocks.
+		let numberOfBlocksRequestedToView = endBlockIndexNumber - startBlockIndexNumber + 1;
+		if (numberOfBlocksRequestedToView > maximumNumberOfBlocksToView) {
+			showError(`Requested Range of Blocks to view (${numberOfBlocksRequestedToView}) is greater than the ${maximumNumberOfBlocksToView} allowed. ` +
+				`Please specify a Block Range to view that is less than or equal to ${maximumNumberOfBlocksToView} blocks.`);
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + "/blocks";
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// console.log('responseData =', responseData);
+
+  		// If we cannot get the "/blocks" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Blocks starting at index 0.
+
+		// Check that the Start Block Index Number and End Block Index Number refers to existing blocks in the Chain.
+		let totalNumberOfBlocksInBlockchain = responseData.length;
+		if (startBlockIndexNumber >= totalNumberOfBlocksInBlockchain) {
+			showError(`Entered Start Block Index Number refers to a Block Number that does not exist in the Chain. ` +
+				`The current number of blocks in the Chain is ${totalNumberOfBlocksInBlockchain}. ` +
+				`Please enter a Start Block Index Number that is less than ${totalNumberOfBlocksInBlockchain}.`);
+			return;
+		}
+		if (endBlockIndexNumber >= totalNumberOfBlocksInBlockchain) {
+			showError(`Entered End Block Index Number refers to a Block Number that does not exist in the Chain. ` +
+				`The current number of blocks in the Chain is ${totalNumberOfBlocksInBlockchain}. ` +
+				`Please enter an End Block Index Number that is less than ${totalNumberOfBlocksInBlockchain}.`);
+			return;
+		}
+
+		currentBlocks = [];
+
+		let blockIndexNumber = endBlockIndexNumber;
+		for (let i = startBlockIndexNumber; i <= endBlockIndexNumber; i++) {
+			currentBlocks.push(responseData[blockIndexNumber]);
+			blockIndexNumber--;
+		}
+
+		createViewBlocksResultsTable();
+		$('#totalNumberOfBlocksViewRangeOfBlocksResults').val(totalNumberOfBlocksInBlockchain.toString(10));
+		$('#numberOfBlocksShownViewRangeOfBlocksResults').val(currentBlocks.length.toString(10));
+
+		$('#totalNumberOfBlocksViewBlocksDiv').show();
+	}
+
+	async function showBlockByBlockIndexNumberViewBlocks() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewBlocks').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		// Check for valid Block Index Number
+		let blockIndexNumber = $('#blockIndexNumberViewBlocks').val().trim();
+		if (blockIndexNumber.length === 0) {
+			showError('Block Index Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Block Index Number that is an integer greater than or equal to 0.');
+			return;
+		}
+		if (!isNumeric(blockIndexNumber)) {
+			showError("Entered Block Index Number is not a positive integer. " +
+					"Please enter Block Index Number that is greater than or equal to 0.");
+			return;
+		}
+
+		blockIndexNumber = parseInt(blockIndexNumber);
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + `/blocks/${blockIndexNumber}`;
+		let responseData = undefined;
+		let errorResponse = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+				if (error.response != undefined) {
+					errorResponse = error.response;
+				}
+				else {
+					errorResponse = error;
+				}
+  		});
+
+  		hideInfo();
+
+  		// console.log('responseData =', responseData);
+  		console.log('errorResponse =', errorResponse);
+
+  		// If we cannot get the "/blocks" from the given "nodeIdUrl", then...
+  		if (responseData === undefined && errorResponse === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+		else if (errorResponse !== undefined) {
+			if (errorResponse.data !== undefined && errorResponse.data.errorMsg !== undefined) {
+				showError(errorResponse.data.errorMsg);
+				return;
+			}
+			else {
+				showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+					`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+					`provided that's not in the network.`);
+				return;
+			}
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back
+		// an array of Blocks starting at index 0.
+
+		currentBlocks = [ responseData ];
+
+		createViewBlocksResultsTable();
+		$('#totalNumberOfBlocksViewRangeOfBlocksResults').val('');
+		$('#numberOfBlocksShownViewRangeOfBlocksResults').val('1');
+
+		$('#totalNumberOfBlocksViewBlocksDiv').hide();
+	}
+
+	function viewBlocksTableClearResults() {
+		currentBlocks = [];
+		createViewBlocksResultsTable();
+		$('#totalNumberOfBlocksViewRangeOfBlocksResults').val('');
+		$('#numberOfBlocksShownViewRangeOfBlocksResults').val('');
+	}
 });

@@ -136,7 +136,47 @@
 
     <section id="viewBlocks">
         <h1>View Blocks</h1>
-        Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" id="blockchainNodeBlocks"><br><br>
+        Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" id="blockchainNodeViewBlocks"><br><br>
+        If you wish to see the current number of blocks in the Franklin Blockchain, please go to the <b>General Info</b> and you may see it in the <b>Number of Blocks</b>
+        text field.<br>
+        <br>
+        <hr><br>
+        <b>View Block by Block Index Number:</b><br>
+        <br>
+        <input type="button" id="buttonShowLatestBlocks" value="Show Latest Blocks (Descending Order from Most Recent to Oldest - 50 Blocks Maximum Shown)"/><br><br>
+        <br>
+        <b>View Range of Blocks:</b>
+        <input type="button" id="buttonClearViewRangeOfBlocksInputs" value="Clear View Range of Blocks Inputs"/><br>
+        <br>
+        You may view a range of Blocks by specifying the <b>Start Block Index Number</b> and <b>End Block Index Number</b> below in the respective text fields. Block Index
+        numbering starts at 0 and increments further. The maximum number of blocks that will be shown is 50. The numbers entered in the <b>Start Block Index Number</b>
+        and <b>End Block Index Number</b> must be positive numbers greater than or equal to 0. The <b>End Block Index Number</b> entered must be greater than or equal to the
+        <b>State Block Index Number</b> entered, and the range given may not be more than 50 blocks. The range for the Start Block Index Number to End Block Index
+        Number must be a range of blocks that actually exists in the Franklin Blockchain.<br>
+        <br>
+        Start Block Index Number: <input type="text" size="80" autocomplete="off" id="startBlockIndexNumberViewBlocks"><br>
+        End Block Index Number: <input type="text" size="80" autocomplete="off" id="endBlockIndexNumberViewBlocks"><br>
+        <br>
+        <input type="button" id="buttonShowBlocksRangeAscendingOrder" value="Show Range of Blocks (Ascending Order from Oldest to Newest - 50 Blocks Maximum Shown)"/><br><br>
+        <input type="button" id="buttonShowBlocksRangeDescendingOrder" value="Show Range of Blocks (Descending Order from Newest to Oldest - 50 Blocks Maximum Shown)"/><br><br>
+        <br>
+        <b>View Block by Block Index Number:</b>
+        <input type="button" id="buttonClearBlockIndexNumberInput" value="Clear View Block by Block Index Number Input"/><br>
+        <br>
+        You may view just one specific Block by entering a positive number greater than or equal to 0 in the <b>Block Index Number</b> text field below.<br>
+        <br>
+        Block Index Number: <input type="text" size="80" autocomplete="off" id="blockIndexNumberViewBlocks">
+        <br><br>
+        <input type="button" id="buttonShowBlockByBlockIndexNumberViewBlocks" value="Show Single Block By Block Index Number"/><br><br>
+        <hr><br>
+        <b>View Block(s) Results:</b>
+        <input type="button" id="buttonViewBlocksTableClearResults" value="Clear View Block(s) Results Table"/><br><br>
+        <div id="totalNumberOfBlocksViewBlocksDiv">
+        	Total Number of Blocks: <input type="text" size="40" readonly="true" id="totalNumberOfBlocksViewRangeOfBlocksResults"><br><br>
+        </div>
+        Number of Blocks Shown: <input type="text" size="40" readonly="true" id="numberOfBlocksShownViewRangeOfBlocksResults"><br><br>
+        <div id="viewBlocksTableResultsDiv"></div>
+
     </section>
 
 </main>

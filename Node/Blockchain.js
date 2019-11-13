@@ -11,9 +11,9 @@ module.exports = class Blockchain {
 		// then viewed the results of the https://stormy-everglades-34766.herokuapp.com/info URL, I noticed
 		// that the "currentDifficulty" was "5", so I will also initialize the Blockchain "currentDifficulty"
 		// with "5".
-		this.currentDifficulty = 5; // CurrentDifficulty : integer
+		// this.currentDifficulty = 5; // CurrentDifficulty : integer
 		// this.currentDifficulty = 4; // Used for demo as recommened by Patrick Galloway
-		// this.currentDifficulty = 3; // For testing only
+		this.currentDifficulty = 3; // For testing only
 		// this.currentDifficulty = 6; // Probably not a good idea.
 
 		// Idea obtained from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map web page.
