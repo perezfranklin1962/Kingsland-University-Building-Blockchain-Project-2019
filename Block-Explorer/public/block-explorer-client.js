@@ -24,6 +24,12 @@ $(document).ready(function () {
 	var viewTransactionsResultsDeltaIndex = 1;
 	var maximumNumberOfTransactionsToView = 50;
 
+	// Used to keep track of the "List All Account Balances" for a given query under "View List All Account Balances Results" of "View Accounts and Balances"
+	var viewListAllAccountBalancesResults = [];
+	var viewListAllAccountBalancesStartAccountNumber = 1;
+	var viewListAllAccountBalancesDeltaIndex = 1;
+	var maximumNumberOfAccountBalancesToView = 50;
+
     showView("viewHome");
 
     $('#linkHome').click(function () {
@@ -54,6 +60,12 @@ $(document).ready(function () {
 		createViewTransactionsResultsTableInViewTransactions();
 	    showView("viewTransactions");
     });
+
+    $('#linkViewAccountsAndBalances').click(function () {
+		console.log('linkViewAccountsAndBalances clicked');
+		createListAllAccountBalancesResultsTableInViewAccountsAndBalances();
+	    showView("viewAccountsAndBalances");
+    })
 
     $('#buttonGetGeneralInfo').click(getGeneralInfo);
     $('#buttonClearGeneralInfoResults').click(clearGeneralInfoResults);
@@ -88,6 +100,14 @@ $(document).ready(function () {
 
     $('#buttonViewSpecificTransactionViewTransactions').click(viewSpecificTransactionViewTransactions);
     $('#buttonClearViewSpecificTransactionInputViewTransactions').click(clearViewSpecificTransactionInputViewTransactions);
+
+    $('#buttonViewBalancesForPublicAddressViewAccountsAndBalances').click(viewBalancesForPublicAddressViewAccountsAndBalances);
+    $('#buttonClearGetBalancesForPublicAddressInputAndOutputViewAccountsAndBalances').click(clearGetBalancesForPublicAddressInputAndOutputViewAccountsAndBalances);
+	$('#buttonListAllAccountBalancesDescendingOrderOfAccountBalances').click(listAllAccountBalancesDescendingOrderOfAccountBalances);
+	$('#buttonClearViewListAllAccountBalancesResults').click(clearViewListAllAccountBalancesResults);
+	$('#buttonClearShowRangeOfQueryInputsViewAccountsAndBalances').click(clearShowRangeOfQueryInputsViewAccountsAndBalances);
+	$('#buttonListAllAccountBalancesRangeAscendingOrder').click(listAllAccountBalancesRangeAscendingOrder);
+	$('#buttonListAllAccountBalancesRangeDescendingOrder').click(listAllAccountBalancesRangeDescendingOrder);
 
     function showView(viewName) {
         // Hide all views and show the selected view only
@@ -497,6 +517,45 @@ $(document).ready(function () {
 
         table_body += '</table>';
         $('#viewTransactionsResultsTableViewTransactionsDiv').html(table_body);
+	}
+
+	function createListAllAccountBalancesResultsTableInViewAccountsAndBalances() {
+        var number_of_rows = viewListAllAccountBalancesResults.length;
+        var number_of_cols = 3;
+
+        var table_body = '<table style="width:100%">';
+        table_body += '<tr>';
+		table_body += '<th>Account #</th>';
+		table_body += '<th>Public Address</th>';
+		table_body += '<th>Balance (1 confirmation or more)</th>';
+  		table_body += '</tr>';
+
+        for (var i = 0 ; i < number_of_rows; i++) {
+			table_body += '<tr>';
+            for (var j = 0; j < number_of_cols; j++) {
+            	table_body += '<td>';
+
+				let rowData = viewListAllAccountBalancesResults[i];
+                let table_data = '';
+                if (j === 0) {
+					table_data += (viewListAllAccountBalancesStartAccountNumber + (i * viewListAllAccountBalancesDeltaIndex)).toString(10);
+				}
+				else if (j === 1) {
+					table_data += rowData.publicAddress;
+				}
+				else if (j === 2) {
+					table_data += rowData.balance;
+				}
+
+                table_body += table_data;
+                table_body += '</td>';
+             }
+
+             table_body += '</tr>';
+        }
+
+        table_body += '</table>';
+        $('#viewListAllAccountBalancesResultsTableViewAccountsAndBalancesDiv').html(table_body);
 	}
 
 	async function showLatestBlocks() {
@@ -1195,6 +1254,142 @@ $(document).ready(function () {
 		createViewTransactionsResultsTableInViewTransactions();
 	}
 
+	async function viewBalancesForPublicAddressViewAccountsAndBalances() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewAccountsAndBalances').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		let publicAddress = $('#publicAddressViewAccountsAndBalances').val().trim().toLowerCase();
+		if (publicAddress.length === 0) {
+			showError('The Public Address cannot be an empty string or consist only of white space. Please enter a ' +
+				'Public Address value that is a 40-hex lowercase string.');
+			return;
+		}
+		if (!isValidPublicAddress(publicAddress)) {
+			showError("Entered Public Address is not a 40-hex valued lower case string. " +
+				"Please enter a Public Address that is a 40-hex valued lower case string.");
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + `/address/${publicAddress}/balance`;
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/address/${publicAddress}/balance" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members.
+
+		let displayBalanceInfo = "Balance (6 confirmations or more): " + responseData.safeBalance + "\n" +
+				"Balance (1 confirmation or more): " + responseData.confirmedBalance + "\n" +
+				"Balance (pending - 0 or more confirmations): " + responseData.pendingBalance;
+		$('#textareaDisplayBalancesForPublicAddressViewAccountsAndBalances').val(displayBalanceInfo)
+	}
+
+	async function listAllAccountBalancesDescendingOrderOfAccountBalances() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewAccountsAndBalances').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + '/balances';
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/balances" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back an
+		// object where the attributes are the public addresses and their values are the balances. Will neee to convert this to an
+		// appropriate array of objects so that we can properly sort and display.
+		let publicAddressesArray = Object.keys(responseData);
+		viewListAllAccountBalancesResults = [ ];
+		for (let i = 0; i < publicAddressesArray.length; i++) {
+			let aPublicAddress = publicAddressesArray[i];
+			viewListAllAccountBalancesResults.push({
+				publicAddress: aPublicAddress,
+				balance: responseData[aPublicAddress]
+			});
+		}
+
+  		// Sort this in descending order - by account balance.
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewListAllAccountBalancesResults = viewListAllAccountBalancesResults.sort(function(aAccountBalance, bAccountBalance) { // return b - a --> descending order
+			return (bAccountBalance.balance - aAccountBalance.balance);
+		});
+
+		let totalNumberOfAccountBalancesThatExistsForTypeOfQuery = viewListAllAccountBalancesResults.length;
+		let numberOfAccountBalancesShown = totalNumberOfAccountBalancesThatExistsForTypeOfQuery;
+		if (numberOfAccountBalancesShown > maximumNumberOfAccountBalancesToView) {
+			numberOfAccountBalancesShown = maximumNumberOfAccountBalancesToView;
+			viewListAllAccountBalancesResults = viewListAllAccountBalancesResults.slice(0, maximumNumberOfAccountBalancesToView);
+		}
+
+		$('#typeOfQueryViewAccountsAndBalances').val($('#buttonListAllAccountBalancesDescendingOrderOfAccountBalances').val());
+		$('#totalNumberOfAccountsThatExistForQueryViewAccountsAndBalances').val(totalNumberOfAccountBalancesThatExistsForTypeOfQuery);
+		$('#numberOfAccountsShownViewAccountsAndBalances').val(numberOfAccountBalancesShown);
+
+		viewListAllAccountBalancesStartAccountNumber = totalNumberOfAccountBalancesThatExistsForTypeOfQuery;
+		viewListAllAccountBalancesDeltaIndex = -1;
+		createListAllAccountBalancesResultsTableInViewAccountsAndBalances();
+	}
+
+	function clearViewListAllAccountBalancesResults() {
+		$('#typeOfQueryViewAccountsAndBalances').val('');
+		$('#totalNumberOfAccountsThatExistForQueryViewAccountsAndBalances').val('');
+		$('#numberOfAccountsShownViewAccountsAndBalances').val('');
+
+		viewListAllAccountBalancesResults = [ ];
+		viewListAllAccountBalancesStartAccountNumber = 1;
+		viewListAllAccountBalancesDeltaIndex = 1;
+		createListAllAccountBalancesResultsTableInViewAccountsAndBalances();
+	}
+
 	async function showLatestTransactionsForPublicAddress() {
 		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewTransactions').val().trim());
 		if (nodeIdUrl === undefined) {
@@ -1289,6 +1484,291 @@ $(document).ready(function () {
 		viewTransactionsResultsStartTransactionNumber = totalNumberOfTransactionsThatExistsForTypeOfQuery;
 		viewTransactionsResultsDeltaIndex = -1;
 		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	async function listAllAccountBalancesRangeDescendingOrder() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewAccountsAndBalances').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+		// Check for valid Start Account Number
+		let startAccountNumber = $('#startAccountNumberViewAccountsAndBalances').val().trim();
+		if (startAccountNumber.length === 0) {
+			showError('Start Account Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Start Account Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(startAccountNumber)) {
+			showError("Entered Start Account Number is not a positive integer. " +
+					"Please enter a Start Account Number that is greater than or equal to 1.");
+			return;
+		}
+
+		startAccountNumber = parseInt(startAccountNumber);
+		if (startAccountNumber < 1) {
+			showError("Entered Start Account Number is an integer less than 1. " +
+					"Please enter a Start Account Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// Check for valid End Account Number
+		let endAccountNumber = $('#endAccountNumberViewAccountsAndBalances').val().trim();
+		if (endAccountNumber.length === 0) {
+			showError('End Account Number cannot be an empty string or consist only of white space. Please enter an ' +
+				'End Account Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(endAccountNumber)) {
+			showError('Entered End Account Number is not a positive integer. ' +
+				'Please enter an End Account Number that is greater than or equal to 1.');
+			return;
+		}
+
+		endAccountNumber = parseInt(endAccountNumber);
+		if (endAccountNumber < 1) {
+			showError("Entered End Account Number is an integer less than 1. " +
+					"Please enter an End Account Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// End Account Number cannot be less than the Start Account Number.
+		if (endAccountNumber < startAccountNumber) {
+			showError('End Account Number is less than Start Account Number. Please enter an End Account Number that is ' +
+				'greater than or equal to the Start Account Number.');
+			return;
+		}
+
+		// Cannot request an Account Balaqnces range of more than 50 Account Balances.
+		let numberOfAccountBalancesRequestedToView = endAccountNumber - startAccountNumber + 1;
+		if (numberOfAccountBalancesRequestedToView > maximumNumberOfAccountBalancesToView) {
+			showError(`Requested Range of Account Balances to view (${numberOfAccountBalancesRequestedToView}) is greater than the ${maximumNumberOfAccountBalancesToView} allowed. ` +
+				`Please specify an Account Balances Range to view that is less than or equal to ${maximumNumberOfAccountBalancesToView} Account Balances.`);
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + '/balances';
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/balances" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back an
+		// object where the attributes are the public addresses and their values are the balances. Will need to convert this to an
+		// appropriate array of objects so that we can properly sort and display.
+		let publicAddressesArray = Object.keys(responseData);
+
+		// Check that the Start Account Number and End Account Number refers to existing Account Balances.
+		let totalNumberOfAccountBalances = publicAddressesArray.length;
+		if (startAccountNumber > totalNumberOfAccountBalances) {
+			showError(`Entered Start Account Number refers to an Account Number that does not exist for this type of query. ` +
+				`The current number of Account Balances for this type of query is ${totalNumberOfAccountBalances}. ` +
+				`Please enter a Start Account Number that is less than or eqaul to ${totalNumberOfAccountBalances}.`);
+			return;
+		}
+		if (endAccountNumber > totalNumberOfAccountBalances) {
+			showError(`Entered End Account Number refers to an Account Number that does not exist for this type of query. ` +
+				`The current number of Account Balances for this type of query is ${totalNumberOfAccountBalances}. ` +
+				`Please enter an End Account Number that is less than or equal to ${totalNumberOfAccountBalances}.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back an
+		// object where the attributes are the public addresses and their values are the balances. Will need to convert this to an
+		// appropriate array of objects so that we can properly sort and display.
+		viewListAllAccountBalancesResults = [ ];
+		for (let i = 0; i < publicAddressesArray.length; i++) {
+			let aPublicAddress = publicAddressesArray[i];
+			viewListAllAccountBalancesResults.push({
+				publicAddress: aPublicAddress,
+				balance: responseData[aPublicAddress]
+			});
+		}
+
+  		// Sort this in asending order - by account balance.
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewListAllAccountBalancesResults = viewListAllAccountBalancesResults.sort(function(aAccountBalance, bAccountBalance) { // return a - b --> ascending order
+			return (aAccountBalance.balance - bAccountBalance.balance);
+		});
+
+		// Slice for range of Account Balances AFTER doing ordering in ascending manner.
+		let totalNumberOfAccountBalancesThatExistsForTypeOfQuery = totalNumberOfAccountBalances;
+		viewListAllAccountBalancesResults = viewListAllAccountBalancesResults.slice(startAccountNumber - 1, endAccountNumber);
+
+		// Now we sort that sliced array in descending order
+		viewListAllAccountBalancesResults = viewListAllAccountBalancesResults.sort(function(aAccountBalance, bAccountBalance) { // return b - a --> descending order
+			return (bAccountBalance.balance - aAccountBalance.balance);
+		});
+
+		$('#typeOfQueryViewAccountsAndBalances').val($('#buttonListAllAccountBalancesRangeDescendingOrder').val());
+		$('#totalNumberOfAccountsThatExistForQueryViewAccountsAndBalances').val(totalNumberOfAccountBalancesThatExistsForTypeOfQuery);
+		$('#numberOfAccountsShownViewAccountsAndBalances').val(numberOfAccountBalancesRequestedToView);
+
+		viewListAllAccountBalancesStartAccountNumber = endAccountNumber;
+		viewListAllAccountBalancesDeltaIndex = -1;
+		createListAllAccountBalancesResultsTableInViewAccountsAndBalances();
+	}
+
+	async function listAllAccountBalancesRangeAscendingOrder() {
+		let nodeIdUrl = getValidChainNodeUrl($('#blockchainNodeViewAccountsAndBalances').val().trim());
+		if (nodeIdUrl === undefined) {
+			return;
+		}
+		// Check for valid Start Account Number
+		let startAccountNumber = $('#startAccountNumberViewAccountsAndBalances').val().trim();
+		if (startAccountNumber.length === 0) {
+			showError('Start Account Number cannot be an empty string or consist only of white space. Please enter a ' +
+				'Start Account Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(startAccountNumber)) {
+			showError("Entered Start Account Number is not a positive integer. " +
+					"Please enter a Start Account Number that is greater than or equal to 1.");
+			return;
+		}
+
+		startAccountNumber = parseInt(startAccountNumber);
+		if (startAccountNumber < 1) {
+			showError("Entered Start Account Number is an integer less than 1. " +
+					"Please enter a Start Account Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// Check for valid End Account Number
+		let endAccountNumber = $('#endAccountNumberViewAccountsAndBalances').val().trim();
+		if (endAccountNumber.length === 0) {
+			showError('End Account Number cannot be an empty string or consist only of white space. Please enter an ' +
+				'End Account Number that is an integer greater than or equal to 1.');
+			return;
+		}
+		if (!isNumeric(endAccountNumber)) {
+			showError('Entered End Account Number is not a positive integer. ' +
+				'Please enter an End Account Number that is greater than or equal to 1.');
+			return;
+		}
+
+		endAccountNumber = parseInt(endAccountNumber);
+		if (endAccountNumber < 1) {
+			showError("Entered End Account Number is an integer less than 1. " +
+					"Please enter an End Account Number that is greater than or equal to 1.");
+			return;
+		}
+
+		// End Account Number cannot be less than the Start Account Number.
+		if (endAccountNumber < startAccountNumber) {
+			showError('End Account Number is less than Start Account Number. Please enter an End Account Number that is ' +
+				'greater than or equal to the Start Account Number.');
+			return;
+		}
+
+		// Cannot request an Account Balaqnces range of more than 50 Account Balances.
+		let numberOfAccountBalancesRequestedToView = endAccountNumber - startAccountNumber + 1;
+		if (numberOfAccountBalancesRequestedToView > maximumNumberOfAccountBalancesToView) {
+			showError(`Requested Range of Account Balances to view (${numberOfAccountBalancesRequestedToView}) is greater than the ${maximumNumberOfAccountBalancesToView} allowed. ` +
+				`Please specify an Account Balances Range to view that is less than or equal to ${maximumNumberOfAccountBalancesToView} Account Balances.`);
+			return;
+		}
+
+		showInfo(`Waiting for response from Blockchain Node ${nodeIdUrl} ....`);
+
+		let restfulUrl = nodeIdUrl + '/balances';
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		hideInfo();
+
+  		// If we cannot get the "/balances" from the given "nodeIdUrl", then...
+  		if (responseData === undefined) {
+			showError(`RESTFul GET call to ${restfulUrl} did not return back a successful response. ` +
+				`Unable to connect to Blockchain Node ID URL: ${nodeIdUrl} - probably invalid Blockchain Node ID URL ` +
+				`provided that's not in the network.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back an
+		// object where the attributes are the public addresses and their values are the balances. Will need to convert this to an
+		// appropriate array of objects so that we can properly sort and display.
+		let publicAddressesArray = Object.keys(responseData);
+
+		// Check that the Start Account Number and End Account Number refers to existing Account Balances.
+		let totalNumberOfAccountBalances = publicAddressesArray.length;
+		if (startAccountNumber > totalNumberOfAccountBalances) {
+			showError(`Entered Start Account Number refers to an Account Number that does not exist for this type of query. ` +
+				`The current number of Account Balances for this type of query is ${totalNumberOfAccountBalances}. ` +
+				`Please enter a Start Account Number that is less than or eqaul to ${totalNumberOfAccountBalances}.`);
+			return;
+		}
+		if (endAccountNumber > totalNumberOfAccountBalances) {
+			showError(`Entered End Account Number refers to an Account Number that does not exist for this type of query. ` +
+				`The current number of Account Balances for this type of query is ${totalNumberOfAccountBalances}. ` +
+				`Please enter an End Account Number that is less than or equal to ${totalNumberOfAccountBalances}.`);
+			return;
+		}
+
+		// It's safe to assume at this point that the JSON response will have all the expected data members. Will get back an
+		// object where the attributes are the public addresses and their values are the balances. Will need to convert this to an
+		// appropriate array of objects so that we can properly sort and display.
+		viewListAllAccountBalancesResults = [ ];
+		for (let i = 0; i < publicAddressesArray.length; i++) {
+			let aPublicAddress = publicAddressesArray[i];
+			viewListAllAccountBalancesResults.push({
+				publicAddress: aPublicAddress,
+				balance: responseData[aPublicAddress]
+			});
+		}
+
+  		// Sort this in asending order - by account balance.
+  		// Coding technique source --> https://www.w3schools.com/jsref/jsref_sort.asp
+		viewListAllAccountBalancesResults = viewListAllAccountBalancesResults.sort(function(aAccountBalance, bAccountBalance) { // return a - b --> ascending order
+			return (aAccountBalance.balance - bAccountBalance.balance);
+		});
+
+		// Slice for range of Account Balances AFTER doing ordering in ascending manner.
+		let totalNumberOfAccountBalancesThatExistsForTypeOfQuery = totalNumberOfAccountBalances;
+		viewListAllAccountBalancesResults = viewListAllAccountBalancesResults.slice(startAccountNumber - 1, endAccountNumber);
+
+		$('#typeOfQueryViewAccountsAndBalances').val($('#buttonListAllAccountBalancesRangeAscendingOrder').val());
+		$('#totalNumberOfAccountsThatExistForQueryViewAccountsAndBalances').val(totalNumberOfAccountBalancesThatExistsForTypeOfQuery);
+		$('#numberOfAccountsShownViewAccountsAndBalances').val(numberOfAccountBalancesRequestedToView);
+
+		viewListAllAccountBalancesStartAccountNumber = startAccountNumber;
+		viewListAllAccountBalancesDeltaIndex = 1;
+		createListAllAccountBalancesResultsTableInViewAccountsAndBalances();
 	}
 
 	async function showTransactionsForPublicAddressRangeAscendingOrder() {
@@ -2224,6 +2704,16 @@ $(document).ready(function () {
 		$('#totalNumberOfTransactionsThatExistForQueryViewTransactions').val('');
 		$('#numberOfTransactionsShownViewTransactions').val('');
 		createViewTransactionsResultsTableInViewTransactions();
+	}
+
+	function clearGetBalancesForPublicAddressInputAndOutputViewAccountsAndBalances() {
+		$('#publicAddressViewAccountsAndBalances').val('');
+		$('#textareaDisplayBalancesForPublicAddressViewAccountsAndBalances').val('');
+	}
+
+	function clearShowRangeOfQueryInputsViewAccountsAndBalances() {
+		$('#startAccountNumberViewAccountsAndBalances').val('');
+		$('#endAccountNumberViewAccountsAndBalances').val('');
 	}
 
 	function viewBlocksTableClearResults() {

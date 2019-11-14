@@ -21,6 +21,7 @@
     <a href="#" id="linkViewPeers">Peers</a>
     <a href="#" id="linkViewBlocks">Blocks</a>
     <a href="#" id="linkViewTransactions">Transactions</a>
+    <a href="#" id="linkViewAccountsAndBalances">Accounts and Balances</a>
 </header>
 
 <main>
@@ -63,7 +64,7 @@
             <li><b>View Accounts and Balances</b>
             	<ul>
 					<li>View All Account Balances (Maximum of 50 Account Balances at a time)</li>
-					<li>View Balance for a Public Address</li>
+					<li>View Balances for a Public Address</li>
             	</ul>
             </li>
             </li>
@@ -188,7 +189,7 @@
 
     <section id="viewTransactions">
         <h1>View Transactions</h1>
-        Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" id="blockchainNodeViewTransactions"> (Mandatory Input))<br><br>
+        Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" id="blockchainNodeViewTransactions"> (Mandatory Input)<br><br>
         If you wish to see the current Number of <b>Confirmed</b> and <b>Pending Transactions</b> in the <b>FranklinCoin Blockchain</b>, please go to the <b>General Info</b>
         Tab and you may see it in the <b>Number of Confirmed Transactions (1 or more confirmations)</b> and <b>Number of Pending Transactions (0 confirmations)</b>
         text fields.
@@ -280,6 +281,62 @@
 		Total Number of Transactions that exists for Type of Query: <input type="text" size="40" readonly="true" id="totalNumberOfTransactionsThatExistForQueryViewTransactions"><br>
 		Number of Transactions Shown: <input type="text" size="40" readonly="true" id="numberOfTransactionsShownViewTransactions"><br><br>
 		<div id="viewTransactionsResultsTableViewTransactionsDiv"></div>
+
+    </section>
+
+    <section id="viewAccountsAndBalances">
+		<h1>View Accounts and Balances</h1>
+        Blockchain Node (URL Format): <input type="text" size="80" autocomplete="off" id="blockchainNodeViewAccountsAndBalances"> (Mandatory Input)<br><br>
+
+        <br>
+        <hr>
+        <br>
+
+		<b>List All Account Balances:</b>
+		<br><br>
+		Lists all the <b>Account Balances</b> for all the <b>Public Addresses</b> in the <b>FranklinCoin Blockchain</b>. The <b>Account Balance</b> for a <b>Public Address</b> will be based on
+		all the <b>Transactions</b> in which the <b>Public Address</b> was either the <b>to</b> or <b>from</b> participant. Only <b>Confirmed Transactions</b> (with 1 or more confirmations)
+		will be used to calculate the <b>Account Balance</b> for the <b>Public Address</b>. If a <b>Public Address</b> has never been a participant in any <b>Transaction</b>, then that
+		<b>Public Address</b> will never show up in the List.<br>
+
+		<br>
+		<input type="button" id="buttonListAllAccountBalancesDescendingOrderOfAccountBalances" value="Show All Account Balances (Descending Order from Accounts with Highest Balances to Lowest Balances - 50 Account Balances Maximum Shown)"/><br><br>
+		<input type="button" id="buttonListAllAccountBalancesRangeAscendingOrder" value="Show Range of Account Balances (Ascending Order from Accounts with Lowest Balances to Highest Balances - 50 Transactions Maximum Shown)"/><br><br>
+		<input type="button" id="buttonListAllAccountBalancesRangeDescendingOrder" value="Show Range of Account Balances (Descending Order from Accounts with Highest Balances to Lowest Balances - 50 Transactions Maximum Shown)"/><br><br>
+
+		<br>
+		<b>Show Range Query Inputs:</b>
+		<input type="button" id="buttonClearShowRangeOfQueryInputsViewAccountsAndBalances" value="Clear Show Range Query Inputs"/><br>
+        <br>
+        There are <b>Show Range</b> queries above that require one to input the <b>Start Account Number</b> and <b>End Account Number</b> inputs shown below. The <b>FranklinCoin Blockchain</b>
+      	does not associate any such <b>Account Number</b> with a <b>Public Address</b>; <b>Public Addresses</b> are uniquely identified by there <b>40-Hex Digit</b> value - not an
+      	<b>Account Number</b>. This is done here for purposes of being able to conveniently choose a range of <b>Public Addresses</b> Account balances to be viewed for
+        any <b>Show Range</b> query due to the limitation of being able to only view 50 Account Balances at a time. The starting <b>Account Number</b> for any set of <b>Public Addresses</b> is 1.<br>
+        <br>
+        Start Account Number: <input type="text" size="80" autocomplete="off" id="startAccountNumberViewAccountsAndBalances"><br>
+        End Account Number: <input type="text" size="80" autocomplete="off" id="endAccountNumberViewAccountsAndBalances"><br>
+        <br>
+
+        <br>
+        <b>Get Balances for a Public Address:</b>
+        <input type="button" id="buttonClearGetBalancesForPublicAddressInputAndOutputViewAccountsAndBalances" value="Clear Input and Output: Get Balances for a Public Address"/><br>
+		<br>
+		Public Address (40-Hex lowercase digits): <input type="text" size="80" autocomplete="off" id="publicAddressViewAccountsAndBalances"><br>
+		<br>
+		<input type="button" id="buttonViewBalancesForPublicAddressViewAccountsAndBalances" value="Display Balances for Public Address"/><br>
+		<textarea id="textareaDisplayBalancesForPublicAddressViewAccountsAndBalances" class="result" readonly="true"></textarea>
+
+        <br>
+		<hr>
+        <br>
+
+		<b>View List All Account Balances Results:</b>
+		<input type="button" id="buttonClearViewListAllAccountBalancesResults" value="Clear View List All Account Balances Results Table"/><br>
+		<br>
+		Type of Query: <input type="text" size="140" readonly="true" id="typeOfQueryViewAccountsAndBalances"><br>
+		Total Number of Accounts that exists for Type of Query: <input type="text" size="40" readonly="true" id="totalNumberOfAccountsThatExistForQueryViewAccountsAndBalances"><br>
+		Number of Accounts Shown: <input type="text" size="40" readonly="true" id="numberOfAccountsShownViewAccountsAndBalances"><br><br>
+		<div id="viewListAllAccountBalancesResultsTableViewAccountsAndBalancesDiv"></div>
 
     </section>
 
