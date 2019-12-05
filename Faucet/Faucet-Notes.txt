@@ -1,0 +1,14 @@
+To run the Faucet, type one the following inside of THIS directory: 
+------------------------------------------------------------------------
+1) http-server
+   a) port defaults to 8080
+   b) browser URL --> http://localhost:8080
+2) http-server -p <portNumber>
+   a) port is <portNumber>
+   b) browser URL --> http://localhost:<portNumber>
+
+
+References about http-server:
+1) https://www.npmjs.com/package/http-server
+2) https://github.com/http-party/http-server 
+   --> some of these port options do not work as stated - for example, the --port option does not work - must use -p

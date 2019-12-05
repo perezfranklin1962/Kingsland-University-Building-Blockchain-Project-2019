@@ -2342,17 +2342,21 @@ module.exports = class Node {
 	//
 	// Reference: Node/research/Synchronizing-the-Chain-and-Pending-Transactions.jpg file
 	async synchronizeChainFromPeerInfo(peerInfo) {
-		// console.log("Inside of synchronizeChainFromPeerInfo!");
+		console.log("Inside of synchronizeChainFromPeerInfo!");
+		console.log('   peerInfo.cumulativeDifficulty =', peerInfo.cumulativeDifficulty);
+		console.log('   this.chain.calculateCumulativeDifficulty() =', this.chain.calculateCumulativeDifficulty());
+
 		// If the Peer Chain has less then or equal to the cummlative difficulty of this chain, then just return.
 		if (peerInfo.cumulativeDifficulty <= this.chain.calculateCumulativeDifficulty()) {
 			return { message: `Chain from ${peerInfo.nodeUrl} has a 'cumulativeDifficulty' that is less than or equal to this Node's chain - will not synchronize with peer` };
 		}
 
 		// At this point, we know that the Peer Chain has greater cummlative difficulty than this chain. So, get the Peer Chain's blocks.
+		console.log("   Get the Peer Chain's blocks...");
 
 		let restfulUrlBlocks = peerInfo.nodeUrl + "/blocks";
 		let responseDataBlocks = undefined;
-		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+		await axios.get(restfulUrlBlocks, {timeout: restfulCallTimeout})
 			.then(function (response) {
 				// console.log('response = ', response);
 				// console.log('response.data =', response.data);
@@ -2452,6 +2456,7 @@ module.exports = class Node {
 	// we should syncronize with the node from the receiving Peer is it's chain has a higher "cumulativeDifficulty".
 	//
 	notifyPeersAboutNewBlock(jsonInput) {
+		console.log('Entered Node.notifyPeersOfNewBlock...');
 		// Check that all the expected fields in the jsonInput are present.
 		if (!jsonInput.hasOwnProperty("blocksCount")) {
 			return { errorMsg: "Bad Request: field 'blocksCount' is missing" };

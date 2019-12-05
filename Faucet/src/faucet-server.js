@@ -2,7 +2,7 @@
 const express = require("express");
 const app = express();
 
-// NOTE: The "cors" belos is NOT needed, because we only want browsers located in "localhost" to execute
+// NOTE: The "cors" below is NOT needed, because we only want browsers located in "localhost" to execute
 // the below /getCoins POST. That way, if someone OUTSIDE of the computer tries to execute the below RESTFul
 // Web Service directly, he/she will not be able to do so. It can ONLY be executed from the "index.html" file in
 /// Node.js server mode.
