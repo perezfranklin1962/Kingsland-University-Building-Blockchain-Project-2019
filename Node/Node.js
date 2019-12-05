@@ -1595,10 +1595,11 @@ module.exports = class Node {
 				let peerUrls = Array.from(node.peers.values());
 				for (let i = 0; i = peerUrls.length; i++) {
 					let peerUrl = peerUrls[i];
+					let transactionToBroadcast = pendingTransaction;
 					let transactionsSendRestfulUrl = peerUrl + "/transactions/send";
 					let transactionsSendResponseData = undefined;
 					let transactionsSendError = undefined;
-					await axios.post(restfulUrl, transactionToBroadcast, {timeout: restfulCallTimeout})
+					await axios.post(transactionsSendRestfulUrl, transactionToBroadcast, {timeout: restfulCallTimeout})
 						.then(function (response) {
 							// console.log('response = ', response);
 							// console.log('response.data =', response.data);
