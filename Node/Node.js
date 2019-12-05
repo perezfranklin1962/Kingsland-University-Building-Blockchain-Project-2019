@@ -299,7 +299,7 @@ module.exports = class Node {
 		if (theChosenTransaction === undefined) {
 			response = {
 				errorMsg: "No such Transaction was found having the given Transaction Hash Id"
-			}
+			};
 		}
 		else {
 			response = theChosenTransaction;
@@ -1371,8 +1371,8 @@ module.exports = class Node {
 		// 1) First get /info and check the nodeId
 		// 2) Never connect twice to the same nodeId
 		//
-		// I'll interpret the above to also mean for "peerUrl" values. What is there's more than ONE entry in the "peers" Map that
-		// points to the same "peerUrl"? Nor clear from instructions on what should be done,. but I'll make a judgment call and remove
+		// I'll interpret the above to also mean for "peerUrl" values. What if there's more than ONE entry in the "peers" Map that
+		// points to the same "peerUrl"? Not clear from instructions on what should be done, but I'll make a judgment call and remove
 		// all such entries in the "peers" Map that has the given "peerUrl".
 		let keys = Array.from(this.peers.keys());
 		for (let i = 0; i < keys.length; i++) {
@@ -1491,7 +1491,7 @@ module.exports = class Node {
 
 		let response = {
 				message: `Connected to peer: ${jsonInput.peerUrl}`
-		}
+		};
 
 		// console.log('async function connectToPeer: response =', response);
 
@@ -1538,10 +1538,11 @@ module.exports = class Node {
 			this.peers.delete(peerInfo.nodeId);
 			return {
 				errorMsg: `Peer ${peerInfo.nodeUrl} did not respond with Status OK from call to /transactions/pending - deleted as peer`
-			}
+			};
 		}
 
 		// The "transactionsPendingResponseData" should have the following type of stucture:
+		/*
 		[
 			{
 				"from" : "f3a1e69b6176052fcc4a3248f1c5a91dea308ca9",
@@ -1556,6 +1557,7 @@ module.exports = class Node {
 					"6293c000ae4af69510f939d3f459e6d7e1da464ec91c7a0a08dd00dc0b3a6cdc" ]
 			}
 		]
+		*/
 
 		let response = {
 				sendPendingTransactionSuccessResponses: [ ],
@@ -1563,7 +1565,7 @@ module.exports = class Node {
 				transactionSendSuccessResponses: [ ],
 				transactionSendErrorResponses: [ ],
 				peersDeleted: [ ]
-		}
+		};
 
 		// Will assume that it's attributes are OK, but will leave checking with the called method.
 		for (let i = 0; i < transactionsPendingResponseData.length; i++) {
@@ -1593,8 +1595,15 @@ module.exports = class Node {
 
 				let peerNodeIds = Array.from(node.peers.keys());
 				let peerUrls = Array.from(node.peers.values());
-				for (let i = 0; i = peerUrls.length; i++) {
+				for (let i = 0; i < peerUrls.length; i++) {
 					let peerUrl = peerUrls[i];
+
+					// No need to inform the Peer from which we obtained the Pending Transaction. This would waste network bandwith.
+					if (peerUrl === peerInfo.nodeUrl) {
+						console.log(`No need to inform Peer ${peerUrl} from which we obtained the Pending Transaction!`);
+						continue;
+					}
+
 					let transactionToBroadcast = pendingTransaction;
 					let transactionsSendRestfulUrl = peerUrl + "/transactions/send";
 					let transactionsSendResponseData = undefined;
@@ -1640,7 +1649,7 @@ module.exports = class Node {
 						response.transactionSendSuccessResponses.push(transactionsSendResponseData);
 					}
 
-				} // end for (let i = 0; i = peerUrls.length; i++)
+				} // end for (let i = 0; i < peerUrls.length; i++)
 
 			} // end if (sendTransactionResponse.hasOwnProperty("errorMsg"))
 
@@ -1801,7 +1810,7 @@ module.exports = class Node {
 			}
 
 			// Check that the "data" field has no white space neither at the beginning nor at the end.
-			if (transactionToValidate.data !== transaction.data.trim()) {
+			if (transactionToValidate.data !== transactionToValidate.data.trim()) {
 				return { errorMsg: `Peer Block ${blockToValidate.index} has invalid Transaction ${i}: field 'data' has white space at the beginning and/or the end - it should have no such white space` };
 			}
 
@@ -1986,13 +1995,13 @@ module.exports = class Node {
 
 				// Let's delete the "value" amount from the "from" public address, since the "from" public address has enough to cover the
 				// "value" amount.
-				let tempAmount = confirmedAccountBalancesMap.get(transactionToValidate.from);
+				tempAmount = confirmedAccountBalancesMap.get(transactionToValidate.from);
 				tempAmount -= transactionToValidate.value;
 				confirmedAccountBalancesMap.set(transactionToValidate.from, tempAmount);
 
 				// Let's add the "value" amount to the "to" public address, since the "from" public address has enough to cover the
 				// "value" amount.
-				let tempAmount = confirmedAccountBalancesMap.get(transactionToValidate.to);
+				tempAmount = confirmedAccountBalancesMap.get(transactionToValidate.to);
 				tempAmount += transactionToValidate.value;
 				confirmedAccountBalancesMap.set(transactionToValidate.to, tempAmount);
 			}
@@ -2040,7 +2049,7 @@ module.exports = class Node {
 		// BOTH of their hashes sould be the same.
 		try {
 			let thisNode_genesisBlock_totalHash = CryptoJS.SHA256(JSON.stringify(this.chain.blocks[0])).toString();
-			let peerNode_genesidBlock_totalHash = CryptoJS.SHA256(JSON.stringify(blocksToValidate[0])).toString();
+			let peerNode_genesisBlock_totalHash = CryptoJS.SHA256(JSON.stringify(blocksToValidate[0])).toString();
 			if (thisNode_genesisBlock_totalHash !== peerNode_genesisBlock_totalHash) {
 				return {
 					errorMsg: "Peer Genesis Block is not valid",
@@ -2083,55 +2092,55 @@ module.exports = class Node {
 			// Validate that all block fields are present and have valid values
 
 			// Validate that the Block has all its fields present
-			if (blockToValidate.hasOwnProperty("index")) {
+			if (!blockToValidate.hasOwnProperty("index")) {
 				return {
 					errorMsg: `Peer Block ${i} has no 'index' field`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (blockToValidate.hasOwnProperty("transactions")) {
+			if (!blockToValidate.hasOwnProperty("transactions")) {
 				return {
 					errorMsg: `Peer Block ${i} has no 'transactions' field`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (blockToValidate.hasOwnProperty("difficulty")) {
+			if (!blockToValidate.hasOwnProperty("difficulty")) {
 				return {
 					errorMsg: `Peer Block ${i} has no 'difficulty' field`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (blockToValidate.hasOwnProperty("prevBlockHash")) {
+			if (!blockToValidate.hasOwnProperty("prevBlockHash")) {
 				return {
 					errorMsg: `Peer Block ${i} has no 'prevBlockHash' field`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (blockToValidate.hasOwnProperty("minedBy")) {
+			if (!blockToValidate.hasOwnProperty("minedBy")) {
 				return {
 					errorMsg: `Peer Block ${i} has no 'minedBy' field`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (blockToValidate.hasOwnProperty("blockDataHash")) {
+			if (!blockToValidate.hasOwnProperty("blockDataHash")) {
 				return {
 					errorMsg: `Peer Block ${i} has no 'blockDataHash' field`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (blockToValidate.hasOwnProperty("nonce")) {
+			if (!blockToValidate.hasOwnProperty("nonce")) {
 				return {
 					errorMsg: `Peer Block ${i} has no 'nonce' field`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (blockToValidate.hasOwnProperty("dateCreated")) {
+			if (!blockToValidate.hasOwnProperty("dateCreated")) {
 				return {
 					errorMsg: `Peer Block ${i} has no 'dateCreated' field`,
 					errorType: badRequestErrorType
 				};
 			}
-			if (blockToValidate.hasOwnProperty("blockHash")) {
+			if (!blockToValidate.hasOwnProperty("blockHash")) {
 				return {
 					errorMsg: `Peer Block ${i} has no 'blockHash' field`,
 					errorType: badRequestErrorType
@@ -2287,11 +2296,11 @@ module.exports = class Node {
 			// Ensure the block hash matches the block difficulty
 			let leadingZeros = ''.padStart(blockToValidate.difficulty, '0');
 			if (!blockToValidate.blockHash.startsWith(leadingZeros)) {
-				return { errorMsg: `Peer Block ${i} has a 'blockHash' field value that does not match it's Block difficulty` }
+				return { errorMsg: `Peer Block ${i} has a 'blockHash' field value that does not match it's Block difficulty` };
 			}
 
 			// Validate that prevBlockHash == the hash of the previous block
-			if (blockToValidate.prevBlockHash !== blocks[i-1].blockHash) {
+			if (blockToValidate.prevBlockHash !== blocksToValidate[i-1].blockHash) {
 				return {
 					errorMsg: `Peer Block ${i} has a 'prevBlockHash' field value that is not equal to the 'blockHash' field value of previous Peer Block ${i-1} - they should have the same value`,
 					errorType: badRequestErrorType
@@ -2307,7 +2316,7 @@ module.exports = class Node {
 				return {
 					errorMsg: validateTransactionsResponse,
 					errorType: badRequestType
-				}
+				};
 			}
 		}
 
@@ -2328,7 +2337,7 @@ module.exports = class Node {
 			};
 		}
 
-		response = { message: "successful validation" }
+		let response = { message: "successful validation" }; // DUMMY: Last fix here caused problems with ports!
 		return response;
 	}
 
@@ -2344,6 +2353,7 @@ module.exports = class Node {
 	// Reference: Node/research/Synchronizing-the-Chain-and-Pending-Transactions.jpg file
 	async synchronizeChainFromPeerInfo(peerInfo) {
 		console.log("Inside of synchronizeChainFromPeerInfo!");
+		console.log('   peerInfo =', peerInfo);
 		console.log('   peerInfo.cumulativeDifficulty =', peerInfo.cumulativeDifficulty);
 		console.log('   this.chain.calculateCumulativeDifficulty() =', this.chain.calculateCumulativeDifficulty());
 
@@ -2379,12 +2389,13 @@ module.exports = class Node {
 			return {
 				errorMsg: `Attempt to call RESTFul ${restfulUrlBlocks} on peer failed - removed ${peerInfo.nodeUrl} as peer`,
 				errorType: badRequestErrorType
-			}
+			};
 		}
 
 		// Validate the downloaded peer chain (blocks, transactions, etc.)
 		let responseValidation = this.validateDownloadedPeerChain(peerInfo.cumulativeDifficulty, responseDataBlocks);
 		if (responseValidation.hasOwnProperty("errorMsg")) {
+			console.log('   responseValidation =', responseValidation);
 			return responseValidation;
 		}
 
@@ -2404,14 +2415,24 @@ module.exports = class Node {
 		let response = {
 				message: `Successfully synchronized this peer ${this.selfUrl} blockchain with other peer ${peerInfo.nodeUrl} blockchain`,
 				warnings: [ ]
-		}
+		};
 
 		// Notify all peers about the new chain
 		// I believe that the RESTFul Web Service URL to call is: /peers/notify-new-block
 		let peerUrls = Array.from(this.peers.values());
 		let peerNodeIds = Array.from(this.peers.keys());
-		for (let i = 0; peerUrls.length; i++) {
+		console.log('   peerUrls = ', peerUrls);
+		console.log('   peerNodeIds = ', peerNodeIds);
+
+		for (let i = 0; i < peerUrls.length; i++) {
 			let peerUrl = peerUrls[i];
+			console.log(`   peerUrls[${i}] =`, peerUrl);
+
+			// No need to notify the peer from which you updated your blockchain. It's waste of network communication.
+			if (peerUrl === peerInfo.nodeUrl) {
+				console.log(`  No need to notify peer ${peerUrl} from which you updated your blockchain.`);
+				continue;
+			}
 
 			let restfulUrlPeerNotifyNewBlock = peerUrl + "/peers/notify-new-block";
 			let peerNotifyBlockJsonInput = {
@@ -2419,6 +2440,7 @@ module.exports = class Node {
 					cumulativeDifficulty: peerInfo.cumulativeDifficulty,
 					nodeUrl: peerInfo.nodeUrl
 			}
+
 			let responsePeerNotifyNewBlock = undefined;
 			await axios.post(restfulUrlPeerNotifyNewBlock, peerNotifyBlockJsonInput, {timeout: restfulCallTimeout})
 				.then(function (axiosResponse) {
@@ -2435,11 +2457,15 @@ module.exports = class Node {
 					// console.log('error =', error);
   			});
 
+  			console.log('   responsePeerNotifyNewBlock =', responsePeerNotifyNewBlock);
+
   			if (responsePeerNotifyNewBlock === undefined) {
 				this.peers.delete(peerNodeIds[i]);
 				response.warnings.push(`Call to ${restfulUrlPeerNotifyNewBlock} did not respond with OK Status - removing ${peerUrl} from list of peers`);
 			}
 		}
+
+		console.log('  synchronizeChainFromPeerInfo: response =', response);
 
 		return response;
 	}
