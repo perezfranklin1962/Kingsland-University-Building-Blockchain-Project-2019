@@ -1378,6 +1378,7 @@ module.exports = class Node {
 		for (let i = 0; i < keys.length; i++) {
 			let key = keys[i];
 			if (this.peers.get(key) === jsonInput.peerUrl) {
+				console.log(`connectToPeer : deleting ${this.peers.get(key)} as a peer!`)
 				this.peers.delete(key);
 			}
 		}
@@ -1426,6 +1427,8 @@ module.exports = class Node {
 
 		// If the RESTFul call to the peer yielded no response after the timeout, then just delete the peer node from the list of "peers".
 		if (peersConnectResponse === undefined && peersConnectError === undefined) {
+			console.log(`connectToPeer peersConnectResponse === undefined && peersConnectError === undefined : ` +
+				`deleting ${this.peers.get(responseData.nodeId)} as a peer`);
 			this.peers.delete(responseData.nodeId);
 			return {
 				errorMsg: `Attempt to form bi-directional connection with ${jsonInput.peerUrl} peer failed due to timeout - removed ${jsonInput.peerUrl} as peer`,
@@ -1441,9 +1444,11 @@ module.exports = class Node {
 			// should in this case make sure to disconnect with the peer.
 			if (peersConnectError.status !== undefined) {
 				if (peersConnectError.status !== HttpStatus.CONFLICT) {
+					console.log(`connectToPeer peersConnectError.status !== HttpStatus.CONFLICT ` +
+						`deleting ${this.peers.get(responseData.nodeId)} as a peer`);
 					this.peers.delete(responseData.nodeId);
 					let anErrorMessage = `Attempt to form bi-directional connection with ${jsonInput.peerUrl} peer failed due to an error - ` +
-						`removed ${jsonInput.peerUrl} as peer. `
+						`removed ${jsonInput.peerUrl} as peer.`
 					if (peersConnectError.errorMsg !== undefined) {
 						anErrorMessage += peersConnectError.errorMsg;
 					}
@@ -1458,6 +1463,8 @@ module.exports = class Node {
 				}
 			}
 			else {
+				console.log(`connectToPeer peersConnectError.status === undefined ` +
+						`deleting ${this.peers.get(responseData.nodeId)} as a peer`);
 				this.peers.delete(responseData.nodeId);
 				let anErrorMessage = `Attempt to form bi-directional connection with ${jsonInput.peerUrl} peer failed due to an error - ` +
 						`removed ${jsonInput.peerUrl} as peer. `
@@ -1535,6 +1542,7 @@ module.exports = class Node {
 		// If the RESTFul call to the peer yielded no response after the timeout or an error response, then just delete the peer node from the
 		// list of "peers".
 		if (transactionsPendingResponseData === undefined) {
+			console.log(`synchronizePendingTransactionFromPeer transactionsPendingResponseData === undefined : deleting ${this.peers.get(peerInfo.nodeId)} as a peer`);
 			this.peers.delete(peerInfo.nodeId);
 			return {
 				errorMsg: `Peer ${peerInfo.nodeUrl} did not respond with Status OK from call to /transactions/pending - deleted as peer`
@@ -1593,8 +1601,8 @@ module.exports = class Node {
 				// the "sendTransactionResponse" variable.
 				pendingTransaction.transactionDataHash = sendTransactionResponse.transactionDataHash;
 
-				let peerNodeIds = Array.from(node.peers.keys());
-				let peerUrls = Array.from(node.peers.values());
+				let peerNodeIds = Array.from(this.peers.keys());
+				let peerUrls = Array.from(this.peers.values());
 				for (let i = 0; i < peerUrls.length; i++) {
 					let peerUrl = peerUrls[i];
 
@@ -1635,6 +1643,8 @@ module.exports = class Node {
 
   					// If the RESTFul call to the peer yielded no response after the timeout, then just delete the peer node from the list of "peers".
 					if (transactionsSendResponseData === undefined && transactionsSendError === undefined) {
+						console.log(`synchronizePendingTransactionFromPeer transactionsSendResponseData === undefined && transactionsSendError === undefined : ` +
+							`deleted ${this.peers.get(peerNodeIds[i])} as a peer`);
 						this.peers.delete(peerNodeIds[i]);
 						response.peersDeleted.push(peerUrl);
 
@@ -2348,6 +2358,28 @@ module.exports = class Node {
 	// 4) If the peer chain is valid, replace the current chain with it
 	// 5) Notify all peers about the new chain
 	//
+	// Two possible "peerInfo" JSON inputs as explained below:
+	// 1) Due to RESTFul URL /info
+	//    {
+	//      "about ": KingslandUniChain/0.9 csharp
+	//      "nodeId ": 1a22d3…9b2f ",
+	//      "chainId" : c6da93eb…c47f",
+	//      "nodeUrl": "http://chain node 03.herokuapp.com"
+	//      "peers ": 2,
+	//      "currentDifficulty": 5,
+	//      "blocksCount ": 25 ,
+	//		"cumulativeDifficulty": 127,
+	//		"confirmedTransactions ": 208,
+	//      "pendingTransactions": 7
+	//	  }
+	// 2) Due to RESTFul URL /peers/notify-new-block
+	//    {
+	//      "blocksCount ": 51,
+	//      "cumulativeDifficulty": 283,
+	//       "nodeUrl ": "http://chain node 03.herokuapp.com:5555"
+	//    }
+	//
+	//
 	// Checking of validity of the "peerInfo" attributes is responsibility of calling function.
 	//
 	// Reference: Node/research/Synchronizing-the-Chain-and-Pending-Transactions.jpg file
@@ -2385,6 +2417,7 @@ module.exports = class Node {
 		// If an attempt is made to do a simple /blocks RESTFul call to the Peer fails, then just remove the peer from the list of "peers".
 		// This should not happen if everything is OK.
   		if (responseDataBlocks === undefined) {
+			console.log(`synchronizeChainFromPeerInfo responseDataBlocks === undefined : deleting ${this.peers.get(peerInfo.nodeId)} as a peer`);
 			this.peers.delete(peerInfo.nodeId);
 			return {
 				errorMsg: `Attempt to call RESTFul ${restfulUrlBlocks} on peer failed - removed ${peerInfo.nodeUrl} as peer`,
@@ -2400,9 +2433,16 @@ module.exports = class Node {
 		}
 
 		// At this point, the Peer's Blockchain blocks have been properly validated. So, go ahead and replace our Blochchain blocks with those of
-		// our Peer and set our difficulty equal to the current difficulty of our peer, since it probably has higher difficulty.
+		// our Peer.
 		this.chain.blocks = responseDataBlocks;
-		this.chain.currentDifficulty = peerInfo.currentDifficulty;
+
+		// If this "peerInfo" input came from a RESTFul URL /info, then "peerInfo.currentDifficulty" will have a defined value. Set our difficulty equal
+		// to the current difficulty of our peer IF it is higher than our own.
+		if (peerInfo.currentDifficulty !== undefined) {
+			if (peerInfo.currentDifficulty > this.chain.currentDifficulty) {
+				this.chain.currentDifficulty = peerInfo.currentDifficulty;
+			}
+		}
 
 		// As per Patrick Galloway: When you synchronize your node's chain with that of your peer, you should also clear all the "miningJobs",
 		//    because ususally that means that the blockchain is now longer and so all of the current jobs would fail anyways. Also if you don't
@@ -2439,7 +2479,7 @@ module.exports = class Node {
 			let peerNotifyBlockJsonInput = {
 					blocksCount: peerInfo.blocksCount,
 					cumulativeDifficulty: peerInfo.cumulativeDifficulty,
-					nodeUrl: peerInfo.nodeUrl
+					nodeUrl: this.selfUrl
 			}
 
 			let responsePeerNotifyNewBlock = undefined;
@@ -2455,12 +2495,13 @@ module.exports = class Node {
 					responsePeerNotifyNewBlock = axiosResponse;
 				})
 				.catch(function (error) {
-					// console.log('error =', error);
+					console.log('synchronizeChainFromPeerInfo restfulUrlPeerNotifyNewBlock error =', error);
   			});
 
-  			console.log('   responsePeerNotifyNewBlock =', responsePeerNotifyNewBlock);
+  			// console.log('   responsePeerNotifyNewBlock =', responsePeerNotifyNewBlock);
 
   			if (responsePeerNotifyNewBlock === undefined) {
+				console.log(`synchronizeChainFromPeerInfo responsePeerNotifyNewBlock === undefined : ${this.peers.get(peerNodeIds[i])} removed as a peer`);
 				this.peers.delete(peerNodeIds[i]);
 				response.warnings.push(`Call to ${restfulUrlPeerNotifyNewBlock} did not respond with OK Status - removing ${peerUrl} from list of peers`);
 			}
@@ -2521,6 +2562,13 @@ module.exports = class Node {
 
 		if (jsonInput.nodeUrl.length == 0) {
 			return { errorMsg: "Bad Request: field 'nodeUrl' is an empty or white spaces string - it should be a non-white space string with a length greater than or equal to 1" };
+		}
+
+		// Check to see if this came from a Peer Node. If it did not, then this will have to be ignored, because only Peer nodes are suppose to send
+		// the /peers/notify-new-block RESTFul URL.
+		let peerUrls = Array.from(this.peers.values());
+		if (!peerUrls.includes(jsonInput.nodeUrl)) {
+			return { errorMsg: `Bad Request: field 'nodeUrl' value ${jsonInput.nodeUrl} does not correspond to a known Peer Node` };
 		}
 
 		// It may take a while to sync with a Peer Node, so will not wait for the result.
