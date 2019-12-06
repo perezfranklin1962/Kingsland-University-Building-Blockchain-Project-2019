@@ -2347,7 +2347,7 @@ module.exports = class Node {
 			};
 		}
 
-		let response = { message: "successful validation" }; // DUMMY: Last fix here caused problems with ports!
+		let response = { message: "successful validation" };
 		return response;
 	}
 
