@@ -2400,8 +2400,9 @@ module.exports = class Node {
 		}
 
 		// At this point, the Peer's Blockchain blocks have been properly validated. So, go ahead and replace our Blochchain blocks with those of
-		// our Peer.
+		// our Peer and set our difficulty equal to the current difficulty of our peer, since it probably has higher difficulty.
 		this.chain.blocks = responseDataBlocks;
+		this.chain.currentDifficulty = peerInfo.currentDifficulty;
 
 		// As per Patrick Galloway: When you synchronize your node's chain with that of your peer, you should also clear all the "miningJobs",
 		//    because ususally that means that the blockchain is now longer and so all of the current jobs would fail anyways. Also if you don't
