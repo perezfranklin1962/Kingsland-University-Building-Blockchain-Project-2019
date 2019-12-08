@@ -233,6 +233,8 @@ async function sendTransactionToAllPeerNodesVia_RESTFulCall(transactionToBroadca
 			response.peersTransactionsSendErrorResponses.push(theResponse);
 		}
 		else if (errorResponse !== undefined) {
+			// We do not want to delete this peer if an unsuccessful response was obtained, because the unsuccessful response may be due to
+			// the Transaction already existing as a Pending Transaction in the Pending Transactions queue of the peer Node.
 			theResponse.errorMsg = `Peer ${peerUrl} did not respond with success from call to /transactions/send`;
 			theResponse.error = errorResponse;
 			response.peersTransactionsSendErrorResponses.push(theResponse);

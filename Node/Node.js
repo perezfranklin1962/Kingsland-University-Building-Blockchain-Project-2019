@@ -2475,6 +2475,11 @@ module.exports = class Node {
 				continue;
 			}
 
+			// Even though this new block may have not come from this node, we need to state in the "nodeUrl" attribute that it is or else the
+			// other node may ignore the /peers/notify-new-block RESTFul request, and we do not want that. It may ignore it, because if we receive
+			// a /peers/notify-new-block or /peers/connect RESTful request from our current or new peer, the peer that we send the below /peers/notify-new-block
+			// may not be a peer of our current or new peer. Thus, stating the block came from this node that our peer already knows insures that that it will
+			// not be ignored.
 			let restfulUrlPeerNotifyNewBlock = peerUrl + "/peers/notify-new-block";
 			let peerNotifyBlockJsonInput = {
 					blocksCount: peerInfo.blocksCount,
