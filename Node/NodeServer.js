@@ -472,6 +472,10 @@ app.post('/peers/connect', (req, res) => {
 // 1) Section "Notify Peers about New Block Endpoint" of the 4_practical-project-rest-api.pdf file
 // 2) Node/research/REST-Endpoints_Notify-Peers-about-New_Block.jpg
 app.post('/peers/notify-new-block', (req, res) => {
+	// Below code would not work, because I had to make the "node.notifyPeersAboutNewBlock" method asynchronous so I could use
+	// "await" inside the "node.notifyPeersAboutNewBlock" method to wait for a RESTFul Web Service calls I made using
+	// "axios" library.
+	/*
 	let response = node.notifyPeersAboutNewBlock(req.body);
 
 	if (response.hasOwnProperty("errorMsg")) {
@@ -479,6 +483,17 @@ app.post('/peers/notify-new-block', (req, res) => {
 	}
 
 	res.end(JSON.stringify(response));
+	*/
+
+    // Used coding technique described in the https://tutorialzine.com/2017/07/javascript-async-await-explained
+    // web page to call an Asynchronous fuction and get it's response.
+    node.notifyPeersAboutNewBlock(req.body).then( function(response) {
+		if (response.hasOwnProperty("errorMsg")) {
+			res.status(HttpStatus.BAD_REQUEST);
+		}
+
+		res.end(JSON.stringify(response));
+	});
 });
 
 var listeningPort = 5555;

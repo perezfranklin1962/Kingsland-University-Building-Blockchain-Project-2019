@@ -2359,7 +2359,7 @@ module.exports = class Node {
 	// 5) Notify all peers about the new chain
 	//
 	// Two possible "peerInfo" JSON inputs as explained below:
-	// 1) Due to RESTFul URL /info
+	// 1) Due to RESTFul URL /info via method
 	//    {
 	//      "about ": KingslandUniChain/0.9 csharp
 	//      "nodeId ": 1a22d3…9b2f ",
@@ -2372,11 +2372,12 @@ module.exports = class Node {
 	//		"confirmedTransactions ": 208,
 	//      "pendingTransactions": 7
 	//	  }
-	// 2) Due to RESTFul URL /peers/notify-new-block
+	// 2) Due to RESTFul URL /peers/notify-new-block via method "notifyPeersAboutNewBlock" & addition of "currentDifficulty" via method "notifyPeersAboutNewBlock"
 	//    {
 	//      "blocksCount ": 51,
 	//      "cumulativeDifficulty": 283,
-	//       "nodeUrl ": "http://chain node 03.herokuapp.com:5555"
+	//      "nodeUrl": "http://chain node 03.herokuapp.com:5555"
+	//      "currentDifficulty": 5 // added by method "notifyPeersAboutNewBlock"
 	//    }
 	//
 	//
@@ -2436,8 +2437,7 @@ module.exports = class Node {
 		// our Peer.
 		this.chain.blocks = responseDataBlocks;
 
-		// If this "peerInfo" input came from a RESTFul URL /info, then "peerInfo.currentDifficulty" will have a defined value. Set our difficulty equal
-		// to the current difficulty of our peer IF it is higher than our own.
+		// Update the Current Difficulty from the "peerInfo" input.
 		if (peerInfo.currentDifficulty !== undefined) {
 			if (peerInfo.currentDifficulty > this.chain.currentDifficulty) {
 				this.chain.currentDifficulty = peerInfo.currentDifficulty;
@@ -2529,7 +2529,7 @@ module.exports = class Node {
 	// Not sure what professor wants from this, but if this Node receives this type of RESTFul Web Service call, then
 	// we should syncronize with the node from the receiving Peer is it's chain has a higher "cumulativeDifficulty".
 	//
-	notifyPeersAboutNewBlock(jsonInput) {
+	async notifyPeersAboutNewBlock(jsonInput) {
 		console.log('Entered Node.notifyPeersOfNewBlock...');
 		// Check that all the expected fields in the jsonInput are present.
 		if (!jsonInput.hasOwnProperty("blocksCount")) {
@@ -2575,6 +2575,50 @@ module.exports = class Node {
 		if (!peerUrls.includes(jsonInput.nodeUrl)) {
 			return { errorMsg: `Bad Request: field 'nodeUrl' value ${jsonInput.nodeUrl} does not correspond to a known Peer Node` };
 		}
+
+		// As part of the Synchromnization of the Peer, we need to obtain the Current Difficulty of the Peer and add it to "jsonInput" so that this Node
+		// is able to update to the Current Difficulty of the Peer if the Peer has a Current Difficulty greater than this Node. So, let's get this information
+		// via the /info RESTFul Web Service.
+		let restfulUrl = jsonInput.nodeUrl + "/info";
+		let responseData = undefined;
+		await axios.get(restfulUrl, {timeout: restfulCallTimeout})
+			.then(function (response) {
+				// console.log('response = ', response);
+				// console.log('response.data =', response.data);
+				// console.log('response.status =', response.status);
+				// console.log('response.statusText =', response.statusText);
+				// console.log('response.headers =', response.headers);
+				// console.log('response.config =', response.config);
+
+				responseData = response.data;
+			})
+			.catch(function (error) {
+				// console.log('error =', error);
+  		});
+
+  		// console.log('responseData =', responseData);
+
+  		// If we cannot get the "/info" from the given Peer "jsonInput.nodeUrl", then...
+  		if (responseData === undefined) {
+			// Delete this Peer "jsonInput.nodeUrl" if it's in our list of Peers
+			let deletedPeerPortionOfMessage = '';
+			let keys = Array.from(this.peers.keys());
+			for (let i = 0; i < keys.length; i++) {
+				let key = keys[i];
+				if (this.peers.get(key) === jsonInput.nodeUrl) {
+					console.log(`notifyPeersAboutNewBlock : deleting ${this.peers.get(key)} as a peer!`)
+					this.peers.delete(key);
+					deletedPeerPortionOfMessage = `Deleting ${this.peers.get(key)} as a peer!`;
+				}
+			}
+
+			return {
+				errorMsg: `Unable to connect to peer: ${jsonInput.nodeUrl} - ${deletedPeerPortionOfMessage} Invalid URL provided that's not in the network`,
+				errorType: badRequestErrorType
+			}
+		}
+
+		jsonInput.currentDifficulty = responseData.currentDifficulty;
 
 		// It may take a while to sync with a Peer Node, so will not wait for the result.
 		this.synchronizeChainFromPeerInfo(jsonInput);
