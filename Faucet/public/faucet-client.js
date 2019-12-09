@@ -75,6 +75,8 @@ $(document).ready(function () {
     }
 
     async function getYourCoins() {
+		$('#textareaSendTransactionResult').val('');
+
 		let recipientPublicAddress = $('#recipientPublicAddress').val().trim().toLowerCase();
 		if (recipientPublicAddress.length === 0) {
 			showError('The Recipient Public Address cannot be an empty string or consist only of white space. Please enter a ' +
@@ -98,7 +100,7 @@ $(document).ready(function () {
 			let deltaTime = Math.abs(nowDateTime - dateTimePublicAddressReceivedCoins);
 			if (deltaTime <= oneHourInMilliseconds) {
 				showError('Entered Recipient Public Address has already received Coins within the last hour. Only ' +
-					'ONE one request per Public Address per hour will be permitted.');
+					'ONE request per Public Address per hour will be permitted.');
 				return;
 			}
 		}
@@ -120,7 +122,7 @@ $(document).ready(function () {
 		// Check that the recipient is not asking for more than 1,000,000 micro-coins.
 		if (amountToSendValue > 1000000) {
 			showError("Entered Value to send is greater than 1,000,000 micro-coins. " +
-					  "Please enter a Value to send that is positive integer and less than 1,000,000 micro-coins.");
+					  "Please enter a Value to send that is a positive integer less than or eqaul to 1,000,000 micro-coins.");
 			return;
 		}
 
@@ -128,23 +130,26 @@ $(document).ready(function () {
 		let feeAmount = $('#feeAmountToSend').val().trim();
 		if (feeAmount.length === 0) {
 			showError('Fee cannot be an empty string or consist only of white space. Please enter a ' +
-					  'Fee that is a positive integer greater than or equal to 10.');
+					  'Fee that has a value from 10 to 50.');
 			return;
 		}
 		if (!isNumeric(feeAmount)) {
 			showError("Entered Fee is not a positive integer. " +
-				"Please enter a Fee that is positive integer greater than or equal to 10.");
+				"Please enter a Fee that has a value from 10 to 50.");
 			return;
 		}
 
 		feeAmount = parseInt(feeAmount);
-		/*
 		if (feeAmount < 10) {
 			showError("Entered Fee is not a positive integer greater than or equal to 10. " +
-				"Please enter a Fee that is positive integer greater than or equal to 10.");
+				"Please enter a Fee that has a value from 10 to 50.");
 			return;
 		}
-		*/
+		if (feeAmount > 50) {
+			showError("Entered Fee is not a positive integer less than or equal to 50. " +
+				"Please enter a Fee that has a value from 10 to 50.");
+			return;
+		}
 
 		if (amountToSendValue <= feeAmount) {
 			showError("Entered Value is less than or equal to the Fee. " +
@@ -169,7 +174,7 @@ $(document).ready(function () {
 
 		let getCoinsJsonInput = {
 				'recipientPublicAddress': recipientPublicAddress,
-				'amountToSendValue': amountToSendValue - feeAmount,
+				'amountToSendValue': amountToSendValue,
 				'feeAmountToSend': feeAmount,
 				'blockchainNodeFaucet': nodeIdUrl
 		};
@@ -210,6 +215,8 @@ $(document).ready(function () {
 				else {
 					restfulErrorResponse = error.response;
 				}
+
+				console.log('restfulErrorResponse =', restfulErrorResponse);
   			});
 
   		hideInfo();
@@ -259,14 +266,18 @@ $(document).ready(function () {
  		else { // restfulSuccessfulResponse !== undefined
  			console.log('restfulSuccessfulResponse =', restfulSuccessfulResponse);
 
- 			previousTimePublicAddressReceivedCoinsFromFaucet.set(recipientPublicAddress, new Date().getTime());
+ 			if (restfulSuccessfulResponse.errorMsg !== undefined) {
+				showError(restfulSuccessfulResponse.errorMsg);
+			}
+			else {
+				previousTimePublicAddressReceivedCoinsFromFaucet.set(recipientPublicAddress, new Date().getTime());
 
- 			// let displaySendTransactionInfoJson = JSON.parse(restfulSuccessfulResponse);
- 			let displaySendTransactionInfo = "Successful Faucet Operation: \n" +
- 					`We sent ${amountToSendValue - feeAmount} micro-coins to public address ${recipientPublicAddress}` + "\n\n" +
- 					restfulSuccessfulResponse.message;
-
- 			$('#textareaSendTransactionResult').val(displaySendTransactionInfo);
+				// let displaySendTransactionInfoJson = JSON.parse(restfulSuccessfulResponse);
+				let displaySendTransactionInfo = "Successful Faucet Operation: \n" +
+						`We sent ${amountToSendValue} micro-coins to public address ${recipientPublicAddress}` + "\n\n" +
+						restfulSuccessfulResponse.message;
+				$('#textareaSendTransactionResult').val(displaySendTransactionInfo);
+			}
 		}
     }
 

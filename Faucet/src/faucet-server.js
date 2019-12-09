@@ -33,6 +33,13 @@ app.use(bodyParser.json());
 // 2) https://medium.com/@masnun/handling-timeout-in-axios-479269d83c68
 var restfulCallTimeout = 60000; // 60 seconds or 60000 milliseconds
 
+// This is a Map that that keeps track of the time/date that any Public Address has received Coins from the Faucet.
+// The "key" will be a Public Address and the "value" will be the time in milliseconds since the UNIX Epoch Time (1/1/1970).
+// In JavaScript, a timestamp is the number of milliseconds that have passed since January 1, 1970.
+// A Public Address will be permitted to receive Coins from the faucet only within an hour time frame. In other words,
+// only ONE one request per address per hour will be permitted.
+var previousTimePublicAddressReceivedCoinsFromFaucet = new Map();
+
 // References:
 // 1) https://stackoverflow.com/questions/18765869/accessing-http-status-code-constants
 // 2) https://github.com/prettymuchbryce/http-status-codes
@@ -63,8 +70,6 @@ async function sendTransaction(signedTransactionJson, nodeIdUrl, res) {
 	let restfulUrl = nodeIdUrl + "/transactions/send";
 	let restfulSuccessfulResponse = undefined;
 	let restfulErrorResponse = undefined;
-
-	console
 
 	await axios.post(restfulUrl, signedTransactionJson, {timeout: restfulCallTimeout})
 		.then(function (response) {
@@ -163,7 +168,6 @@ async function sendTransaction(signedTransactionJson, nodeIdUrl, res) {
 	}
 
 	console.log('function sendTransaction response =', response);
-
 	return response;
 }
 
@@ -175,6 +179,27 @@ app.post('/getCoins', (req, res) => {
 
 	let faucetPublicKey = CryptoUtilities.getPublicKeyFromPrivateKey(faucetPrivateKey).padStart(65, '0');;
 	let faucetPublicAddress = CryptoUtilities.getPublicAddressFromPublicKey(faucetPublicKey).padStart(40, '0');
+
+	if (previousTimePublicAddressReceivedCoinsFromFaucet.has(req.body.recipientPublicAddress)) {
+		let dateTimePublicAddressReceivedCoins = previousTimePublicAddressReceivedCoinsFromFaucet.get(req.body.recipientPublicAddress);
+		let nowDateTime = new Date().getTime();
+
+		// An hour is a unit of time equal to 60 minutes, or 3,600 seconds.
+		// Source --> https://www.calculateme.com/time/hours/to-milliseconds/
+		let oneHourInMilliseconds = 3600000;
+
+		let deltaTime = Math.abs(nowDateTime - dateTimePublicAddressReceivedCoins);
+		if (deltaTime <= oneHourInMilliseconds) {
+			let errorMessage = {
+					errorMsg: 'Entered Recipient Public Address has already received Coins within the last hour. Only ' +
+						'ONE request per Public Address per hour will be permitted.'
+			};
+
+			res.json(errorMessage);
+			res.status(HttpStatus.BAD_REQUEST);
+			return;
+		}
+	}
 
 	// Transaction constructor below automatically calculates the Transaction Data Hash based on the
 	// input parameters to the constructor.
@@ -210,6 +235,7 @@ app.post('/getCoins', (req, res) => {
 	sendTransaction(signedTransactionJson, req.body.blockchainNodeFaucet, res)
 		.then( function(response) {
 			console.log('app_post_send_transaction response =', response);
+			previousTimePublicAddressReceivedCoinsFromFaucet.set(req.body.recipientPublicAddress, new Date().getTime());
 		    res.json(response);
 		})
 		.catch(function (error) { // Any errors will be caught by the "sendTransaction" method so
