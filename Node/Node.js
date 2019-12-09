@@ -830,9 +830,16 @@ module.exports = class Node {
 		// Source for Coding Technique --> https://www.w3schools.com/jsref/jsref_sort.asp
 		pendingTransactionsConsideredForNextBlock.sort(function(a, b) { return b.fee - a.fee });
 
+		// CORRECTION: Will not limit myself to the below, because it is too restrictive. Found this out when I used Faucet and multiple Public
+		// Addresses requested micro-coins from Faucet. It would take a very long time in higher difficulties if multiple public addresses wanted coins from
+		// the faucet. Below limit of allowing ONE Transaction per 'from' address in the next block caused delays.
+		//
 		// As we go through the "pendingTransactionsConsideredForNextBlock", there are some that may be placed in the next block and some that
 		// are not. So, we keep track of this with the below Map where the key will be the 'from' address of the pending transaction. We do this
 		// because we want to minimize a double spend problem by only allowing ONE Transaction per 'from' address in the next block.
+		//
+		// Changed from the above. The "key" in the below Map will be the Transaction Data Hash. Thus, the Map will still keep track of all the
+		// Transactions to be placed in the Next Block for Mining, but it will now be the Transaction Data Hash.
 		let pendingTransactionsToBePlacedInNextBlockForMiningMap = new Map();
 
 		// Get the Confirmed Balances for ALL of the Public Addresses. We'll need this as a starting point as we "executes all pending transactions
@@ -855,12 +862,13 @@ module.exports = class Node {
 		for (let i = 0; i < pendingTransactionsConsideredForNextBlock.length; i++) {
 			let pendingTransaction = pendingTransactionsConsideredForNextBlock[i];
 
+			// CORRECTION: Will not do the below as explained above. Will allow more than ONE Transaction per 'from' address in the next block.
 			// If there's already a Transaction to be placed in the Next Block for mining that has the same "from" Public Address, then just
 			// skip this Transaction to avoid possible double-spend problem and move on to the next Transaction. This Transaction to be skipped
 			// can be placed later on in another Block.
-			if (pendingTransactionsToBePlacedInNextBlockForMiningMap.has(pendingTransaction.from)) {
-				continue;
-			}
+			// if (pendingTransactionsToBePlacedInNextBlockForMiningMap.has(pendingTransaction.from)) {
+			//     continue;
+			// }
 
 			if (!confirmedBalancesMap.has(pendingTransaction.from)) {
 				confirmedBalancesMap.set(pendingTransaction.from, 0);
@@ -907,7 +915,8 @@ module.exports = class Node {
 				}
 
 				// At this point, we know that the Pending Transaction can be placed in the Next Block to be Mined.
-				pendingTransactionsToBePlacedInNextBlockForMiningMap.set(pendingTransaction.from, pendingTransaction);
+				// pendingTransactionsToBePlacedInNextBlockForMiningMap.set(pendingTransaction.from, pendingTransaction);
+				pendingTransactionsToBePlacedInNextBlockForMiningMap.set(pendingTransaction.transactionDataHash, pendingTransaction);
 			}
 			else { // "from" Public Address does not have enough to cover the Fee
 
@@ -1714,13 +1723,17 @@ module.exports = class Node {
 		// Reference: Node/research/Coins-and-Rewards.jpg file
 		let coinbaseTransactionValue = 5000000;
 
+		// CORRECTION: Will not limit myself to the below, because it is too restrictive. Found this out when I used Faucet and multiple Public
+		// Addresses requested micro-coins from Faucet. It would take a very long time in higher difficulties if multiple public addresses wanted coins from
+		// the faucet. Below limit of allowing ONE Transaction per 'from' address in the next block caused delays.
+		//
 		// This is a Set to keep track of whether a "from" public address has previously appears in a Transaction in this "blockToValidate".
 		// We are only allowing a limit of ONE transaction in which a "from" public address may appear in a block. If we see more than one
 		// transaction in which a "from" public address has appeared, then the Peer chain is considered invalid.
 		// We need this to check if
 		//
 		// Coding Technique use of Set Reference --> https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
-		let fromAddressesThatHaveAppearedInTransaction = new Set();
+		// let fromAddressesThatHaveAppearedInTransaction = new Set();
 
 		// Go through each Transaction and validate it.
 		for (let i = 0; i < blockToValidate.transactions.length; i++) {
@@ -1849,11 +1862,15 @@ module.exports = class Node {
 				return { errorMsg: `Peer Block ${blockToValidate.index} has invalid Transaction ${i}: field 'minedInBlockIndex' is not equal to the Block Index number of the Block that it is inside` };
 			}
 
+			// CORRECTION: Will not limit myself to the below, because it is too restrictive. Found this out when I used Faucet and multiple Public
+			// Addresses requested micro-coins from Faucet. It would take a very long time in higher difficulties if multiple public addresses wanted coins from
+			// the faucet. Below limit of allowing ONE Transaction per 'from' address in the next block caused delays.
+			//
 			// Now is a good time to see if the "from" public address has appeared before in a Transaction in this "blockToValidate".
-			if (fromAddressesThatHaveAppearedInTransaction.has(transactionToValidate.from)) {
-				return { errorMsg: `Peer Block ${blockToValidate.index} has invalid Transaction ${i}: the 'from' public address ${transactionToValidate.from} appears in more than one transaction in the block - a 'from' public address may appear in only one transation in a block` };
-			}
-			fromAddressesThatHaveAppearedInTransaction.add(transactionToValidate.from);
+			// if (fromAddressesThatHaveAppearedInTransaction.has(transactionToValidate.from)) {
+			//     return { errorMsg: `Peer Block ${blockToValidate.index} has invalid Transaction ${i}: the 'from' public address ${transactionToValidate.from} appears in more than one transaction in the block - a 'from' public address may appear in only one transation in a block` };
+			// }
+			// fromAddressesThatHaveAppearedInTransaction.add(transactionToValidate.from);
 
 			// Create a copy of the "transactionToValidate" so that we can have the "transactionDataHash" automatically re-calculated and check
 			// that the "transactionToValidate.transactionDataHash" field has the correct calue.
@@ -2340,7 +2357,7 @@ module.exports = class Node {
 			if (validateTransactionsResponse.hasOwnProperty("errorMsg")) {
 				return {
 					errorMsg: validateTransactionsResponse,
-					errorType: badRequestType
+					errorType: badRequestErrorType
 				};
 			}
 		}
