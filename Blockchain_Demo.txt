@@ -1,0 +1,70 @@
+1) johnniesweet@DESKTOP-LKLDCU2:/mnt/d/Kingsland-University-Building-Blockchain-Project-2019/Block-Explorer/src$ node block-explorer-server.js
+Server started: http://localhost:9999
+
+2) johnniesweet@DESKTOP-LKLDCU2:/mnt/d/Kingsland-University-Building-Blockchain-Project-2019/Node$ node NodeServer.js --listeningPort=5555
+Node Server listening at http://localhost:5555
+
+3) johnniesweet@DESKTOP-LKLDCU2:/mnt/d/Kingsland-University-Building-Blockchain-Project-2019/Node$ node NodeServer.js --listeningPort=5556
+Node Server listening at http://localhost:5555
+
+4) johnniesweet@DESKTOP-LKLDCU2:/mnt/d/Kingsland-University-Building-Blockchain-Project-2019/Node$ node NodeServer.js --listeningPort=5557
+Node Server listening at http://localhost:5557
+
+5) johnniesweet@DESKTOP-LKLDCU2:/mnt/d/Kingsland-University-Building-Blockchain-Project-2019/Node$ node NodeServer.js --listeningPort=5558
+Node Server listening at http://localhost:5558
+
+6) johnniesweet@DESKTOP-LKLDCU2:/mnt/d/Kingsland-University-Building-Blockchain-Project-2019/Miner$ node Miner.js --listeningNodePort=5555
+
+7) johnniesweet@DESKTOP-LKLDCU2:/mnt/d/Kingsland-University-Building-Blockchain-Project-2019/Miner$ node Miner.js --listeningNodePort=5558
+
+8) johnniesweet@DESKTOP-LKLDCU2:/mnt/d/Kingsland-University-Building-Blockchain-Project-2019/Faucet$ http-server -p 7777
+Starting up http-server, serving ./public
+Available on:
+  http://192.168.56.1:7777
+  http://127.0.0.1:7777
+  http://192.168.0.9:7777
+Hit CTRL-C to stop the server
+
+
+9) johnniesweet@DESKTOP-LKLDCU2:/mnt/d/Kingsland-University-Building-Blockchain-Project-2019/Faucet/src$ node faucet-server.js --faucetPrivateKey=37fa69286acb4c45b9c4331d192910d91482d5c8628ae10d56c23d9f2d184aee
+Server started: http://localhost:7777
+
+
+
+=========================================================================
+
+1) F:\My_Information\Kingsland_School-of-Blockchain\M5_Advanced-Projects\3_Designing-The Blockchain-Wallet-Faucet-Explorer\1_designing-the-blockchain-wallet-faucet-explorer.pdf
+
+2) F:\My_Information\Kingsland_School-of-Blockchain\M5_Advanced-Projects\2_Designing-The-Blockchain-Node\1_designing-the-blockchain-node.pdf
+
+3) F:\My_Information\Kingsland_School-of-Blockchain\M5_Advanced-Projects\2_Designing-The-Blockchain-Node\2_practical-project-implement-node.pdf
+
+4) F:\My_Information\Kingsland_School-of-Blockchain\M5_Advanced-Projects\2_Designing-The-Blockchain-Node\3_practical-project-implement-miner.pdf
+
+
+=======================================================================================================================================
+
+Generated random private key: c985856e52b694e6176ee158258bbde7763966ef64d18b6341a87dbdede9b936
+Extracted public key: d6ca902a52bf4a514ab37aeb1698f20d75ffa78714abb2b0f2111d63cbdad3251
+Extracted public adress: 309bb72ddb9bb2abbdcfc8ba326afb38f659f59a
+
+
+Generated random private key: 34e4fb691c3f607d4feeb180f9111acddbc4d2c8b87805b79117787f2c38360d
+Extracted public key: 8787417c7d0846d854308e95938bdb91ef2a2fa8d9a9d17ad57bad8e08d4eea80
+Extracted public adress: 7c5e1c0278b0529c15ad0ca7bfd3358d5f202fc5
+
+
+Generated random private key: 3f0ea45f6a00d85f82dc23e9ab36278d830d20f29294d6c476333eed92dea919
+Extracted public key: 09cb7399eb86a11484d46648f530050fa23d9320f5bce335ac3c360690d3e3d60
+Extracted public adress: ddf4b96e1caf44dc7455aa956ec0a6c924e0d63c
+
+
+Generated random private key: 95d68fe8d212a1898fbf50f1574c70d2e2ec631073cc1317db26a88c992fd246
+Extracted public key: 70df2499b19b5f0eb04ada33eaaf3040a5cd9a47a009362e55fb69e09a22d3070
+Extracted public adress: aac777cfa8c13d80158edee30d63538b62f43bcd
+
+
+Generated random private key: 93b3c047142d25794d56ba56c03135be6e58e4eae7bfd65f1ab50d1bc7e9508b
+Extracted public key: af64c229a6e587545a8fedc9a2dd1cc68654f436d60e7b9f2cf23edd79049c8d1
+Extracted public adress: 679ececc6771e8e0e18501f395cdd981f671a0c3
+
