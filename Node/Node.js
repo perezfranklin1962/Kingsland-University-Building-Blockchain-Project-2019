@@ -1117,6 +1117,21 @@ module.exports = class Node {
 			return { errorMsg: "Previous Block Hash value of block does not equal the Block Hash of the last Block in the Blockchain" }
 		}
 
+		// Verify that none of the Transactions in the "possibleNewBlockCandidate" is already in a Block inside of the Blockchain. We do not want the same Transaction
+		// duplicated and that already exists in another block.
+		for (let i = 0; i < possibleNewBlockCandidate.transactions.length; i++) {
+			let possibleNewCandidateTransaction = possibleNewBlockCandidate.transactions[i];
+			let transaction = this.getTransactionGivenTransactionHashId(possibleNewCandidateTransaction.transactionDataHash);
+
+			// If the Transaction exists, we need to check if it's been mined before and is inside of a Block.
+			if (!transaction.hasOwnProperty("errorMsg")) {
+				if (transaction.minedInBlockIndex !== null && transaction.minedInBlockIndex !== undefined) {
+					return { errorMsg: `Duplicate transaction: Transaction already mined inside of Block Index ${transaction.minedInBlockIndex} that has Transaction Data Hash -> ` +
+						`${possibleNewCandidateTransaction.transactionDataHash}` };
+				}
+			}
+		}
+
 		// At this point it is safe to add the "possibleNewBlockCandidate" into the Blockchain.
 		this.chain.blocks.push(possibleNewBlockCandidate);
 
@@ -2441,6 +2456,30 @@ module.exports = class Node {
 		if (peerInfo.currentDifficulty !== undefined) {
 			if (peerInfo.currentDifficulty > this.chain.currentDifficulty) {
 				this.chain.currentDifficulty = peerInfo.currentDifficulty;
+			}
+		}
+
+		// console.log('franky : this.chain.blocks =', this.chain.blocks);
+
+		// We need to remove any Pending Transactions in this Node that have already been placed inside of a Block in the Blockchain by our Peer Node.
+		let transactionDataHashIdsSet = new Set();
+		for (let i = 0; i < this.chain.pendingTransactions.length; i++) {
+			transactionDataHashIdsSet.add(this.chain.pendingTransactions[i].transactionDataHash);
+		}
+		console.log('franky : this.chain.pendingTransactions =', this.chain.pendingTransactions);
+		let transactionDataHashIdsArray = Array.from(transactionDataHashIdsSet);
+		// console.log('franky : transactionDataHashIdsArray =', transactionDataHashIdsArray);
+		for (let i = 0; i < transactionDataHashIdsArray.length; i++) {
+			let transaction = this.getTransactionGivenTransactionHashId(transactionDataHashIdsArray[i]);
+			// console.log('franky : transaction =', transaction);
+
+			// If the Transaction exists, we need to check if it's been mined before and is inside of a Block. And if it's already inside of a Block, then we
+			// need to remove that Transaction from the Pending List of Transactions.
+			if (!transaction.hasOwnProperty("errorMsg")) {
+				if (transaction.minedInBlockIndex !== null && transaction.minedInBlockIndex !== undefined) {
+					this.chain.pendingTransactions = this.chain.pendingTransactions.filter(aTransaction =>
+						aTransaction.transactionDataHash !== transactionDataHashIdsArray[i]);
+				}
 			}
 		}
 
