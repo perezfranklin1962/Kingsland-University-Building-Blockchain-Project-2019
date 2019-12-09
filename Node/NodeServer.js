@@ -192,7 +192,7 @@ async function sendTransactionToAllPeerNodesVia_RESTFulCall(transactionToBroadca
 			peersDeleted: [ ]
 	};
 
-	for (let i = 0; i = peerUrls.length; i++) {
+	for (let i = 0; i < peerUrls.length; i++) {
 		let peerUrl = peerUrls[i];
 		let restfulUrl = peerUrl + "/transactions/send";
 		let normalResponse = undefined;
@@ -244,6 +244,9 @@ async function sendTransactionToAllPeerNodesVia_RESTFulCall(transactionToBroadca
 			response.peersTransactionsSendSuccessfulResponses.push(theResponse);
 		}
 	}
+
+	// console.log(`sendTransactionToAllPeerNodesVia_RESTFulCall(${transactionToBroadcast}) : response = ${response}`)
+	return response;
 }
 
 // Send Transaction
@@ -357,6 +360,9 @@ async function notifyPeersAboutNewlyMinedBlockVia_RESTFulCall() {
 			response.peersNotifyNewBlockSuccessfulResponses.push(theResponse);
 		}
 	}
+
+	// console.log(`notifyPeersAboutNewlyMinedBlockVia_RESTFulCall : response = ${response}`)
+	return response;
 }
 
 // Submit Block Endpoint
