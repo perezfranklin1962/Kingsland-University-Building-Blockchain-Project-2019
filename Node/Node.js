@@ -832,7 +832,7 @@ module.exports = class Node {
 
 		// As we go through the "pendingTransactionsConsideredForNextBlock", there are some that may be placed in the next block and some that
 		// are not. So, we keep track of this with the below Map where the key will be the 'from' address of the pending transaction. We do this
-		// because we want to minimize a double spend problem by only allowing ONE Transation per 'from' address in the next block.
+		// because we want to minimize a double spend problem by only allowing ONE Transaction per 'from' address in the next block.
 		let pendingTransactionsToBePlacedInNextBlockForMiningMap = new Map();
 
 		// Get the Confirmed Balances for ALL of the Public Addresses. We'll need this as a starting point as we "executes all pending transactions
