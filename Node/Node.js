@@ -855,7 +855,7 @@ module.exports = class Node {
 		for (let i = 0; i < pendingTransactionsConsideredForNextBlock.length; i++) {
 			let pendingTransaction = pendingTransactionsConsideredForNextBlock[i];
 
-			// If there's already a Transaction to be placed in the Next Block for mining that has the same "from" Public Addres, then just
+			// If there's already a Transaction to be placed in the Next Block for mining that has the same "from" Public Address, then just
 			// skip this Transaction to avoid possible double-spend problem and move on to the next Transaction. This Transaction to be skipped
 			// can be placed later on in another Block.
 			if (pendingTransactionsToBePlacedInNextBlockForMiningMap.has(pendingTransaction.from)) {
